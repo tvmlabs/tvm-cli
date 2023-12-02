@@ -174,7 +174,7 @@ checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
 [[package]]
 name = "api_derive"
 version = "1.45.0"
-source = "git+https://github.com/tonlabs/ever-sdk.git?tag=1.45.0#6ce0a92a72aee4e386af8cc1fc443021653bfd33"
+source = "git+https://github.com/gosh-sh/ever-sdk.git?branch=feature/masterchain-free#791f37b75bc8ff6d8772480fa689e5f5e166411f"
 dependencies = [
  "api_info",
  "proc-macro2",
@@ -186,7 +186,7 @@ dependencies = [
 [[package]]
 name = "api_info"
 version = "1.45.0"
-source = "git+https://github.com/tonlabs/ever-sdk.git?tag=1.45.0#6ce0a92a72aee4e386af8cc1fc443021653bfd33"
+source = "git+https://github.com/gosh-sh/ever-sdk.git?branch=feature/masterchain-free#791f37b75bc8ff6d8772480fa689e5f5e166411f"
 dependencies = [
  "serde",
  "serde_derive",
@@ -3080,7 +3080,7 @@ dependencies = [
 [[package]]
 name = "ton_client"
 version = "1.45.0"
-source = "git+https://github.com/tonlabs/ever-sdk.git?tag=1.45.0#6ce0a92a72aee4e386af8cc1fc443021653bfd33"
+source = "git+https://github.com/gosh-sh/ever-sdk.git?branch=feature/masterchain-free#791f37b75bc8ff6d8772480fa689e5f5e166411f"
 dependencies = [
  "aes",
  "api_derive",
@@ -3139,7 +3139,7 @@ dependencies = [
 [[package]]
 name = "ton_client_processing"
 version = "1.45.0"
-source = "git+https://github.com/tonlabs/ever-sdk.git?tag=1.45.0#6ce0a92a72aee4e386af8cc1fc443021653bfd33"
+source = "git+https://github.com/gosh-sh/ever-sdk.git?branch=feature/masterchain-free#791f37b75bc8ff6d8772480fa689e5f5e166411f"
 dependencies = [
  "api_derive",
  "api_info",
@@ -3204,7 +3204,7 @@ dependencies = [
 [[package]]
 name = "ton_sdk"
 version = "1.45.0"
-source = "git+https://github.com/tonlabs/ever-sdk.git?tag=1.45.0#6ce0a92a72aee4e386af8cc1fc443021653bfd33"
+source = "git+https://github.com/gosh-sh/ever-sdk.git?branch=feature/masterchain-free#791f37b75bc8ff6d8772480fa689e5f5e166411f"
 dependencies = [
  "api_derive",
  "api_info",
@@ -3332,7 +3332,7 @@ dependencies = [
 
 [[package]]
 name = "tonos-cli"
-version = "0.36.1"
+version = "0.37.0"
 dependencies = [
  "assert_cmd",
  "async-trait",

@@ -163,7 +163,7 @@ pub fn create_client(config: &Config) -> Result<TonClient, String> {
                     Some(modified_endpoints)
                 },
             message_retries_count: config.retries as i8,
-            message_processing_timeout: 30000,
+            message_processing_timeout: config.timeout,
             wait_for_timeout: config.timeout,
             out_of_sync_threshold: Some(config.out_of_sync_threshold * 1000),
             access_key: config.access_key.clone(),
