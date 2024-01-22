@@ -35,7 +35,7 @@ num-bigint = '0.4'
 num-traits = '0.2'
 qr2term = '0.2'
 regex = '1.5'
-reqwest = '0.11'
+reqwest = { version = '0.11', default-features = false }
 serde_derive = '1.0'
 serde_json = '1.0'
 simplelog = '0.8'
@@ -48,7 +48,7 @@ url = '2.3.1'
 ton_abi = { git = 'https://github.com/tonlabs/ever-abi.git', tag = '2.4.0' }
 ton_block = { git = 'https://github.com/tonlabs/ever-block.git', tag = '1.9.107' }
 ton_block_json = { git = 'https://github.com/tonlabs/ever-block-json.git', tag = '0.7.192' }
-ton_client = { git = 'https://github.com/gosh-sh/ever-sdk.git', branch = "feature/masterchain-free" }
+ton_client = { git = 'https://github.com/gosh-sh/ever-sdk.git', branch = "feature/masterchain-free", default-features = false, features = ['std', 'rustls-tls-webpki-roots']}
 ton_executor = { git = 'https://github.com/tonlabs/ever-executor.git', tag = '1.16.86' }
 ton_labs_assembler = { git = 'https://github.com/tonlabs/ever-assembler.git', tag = '1.4.18' }
 ton_sdk = { git = 'https://github.com/gosh-sh/ever-sdk.git', branch = "feature/masterchain-free" }
