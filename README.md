@@ -1,12 +1,6 @@
 # TONOS-CLI
 
-TONOS-CLI is a multi-platform command line interface for TVM compatible networks (Everscale, Venom, Gosh, TON). 
-
-<p align="center">
-  <a href="https://docs.everscale.network/">
-    <img src="https://4031793516-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FCmimRVYKp3FChIIdVQ51%2Fuploads%2Fg8DCzYhXFbskTt0odAR4%2FEverscale%20Logo.png?alt=media&token=9484b624-6456-47b4-9757-c0fa43f4caa7" alt="Logo"   height="100">
-</p>
- 
+TONOS-CLI is a multi-platform command line interface for TVM compatible networks (Everscale, Venom, Gosh, TON).
 
 It allows user to work with keys and seed phrases, deploy contracts, call any of their methods, generate and broadcast
 messages. It supports specific commands for DeBot, DePool and Multisignature Wallet contracts, as well as a number of
@@ -46,7 +40,8 @@ tonos-cli <subcommand> -h
   - [2.6. Override network settings](#26-override-network-settings)
   - [2.7. Force json output](#27-force-json-output)
   - [2.8. Debug on fail option](#28-debug-on-fail-option)
-  - [2.9 Configure aliases map](#29-configure-aliases-map)
+  - [2.9. Configure aliases map](#29-configure-aliases-map)
+  - [2.10. Enabling verbose mode for SDK execution](#210-enabling-verbose-mode-for-sdk-execution)
 - [3. Cryptographic commands](#3-cryptographic-commands)
   - [3.1. Create seed phrase](#31-create-seed-phrase)
   - [3.2. Generate public key](#32-generate-public-key)
@@ -76,7 +71,7 @@ tonos-cli <subcommand> -h
 - [5. DeBot commands](#5-debot-commands)
 - [6. Multisig commands](#6-multisig-commands)
   - [6.1. Send tokens](#61-send-tokens)
-  - [6.2. Deploy wallet](#62-deploy-wallet)
+- [6.2. Deploy wallet](#62-deploy-wallet)
 - [7. DePool commands](#7-depool-commands)
   - [7.1. Configure TONOS-CLI for DePool operations](#71-configure-tonos-cli-for-depool-operations)
   - [7.2. Deposit stakes](#72-deposit-stakes)
@@ -109,18 +104,22 @@ tonos-cli <subcommand> -h
     - [9.8.1. Call fee command](#981-call-fee-command)
     - [9.8.2. Deploy fee command](#982-deploy-fee-command)
     - [9.8.3. Storage fee command](#983-storage-fee-command)
-- [10. Fetch and replay](#10-fetch-and-replay)
-  - [10.1. How to unfreeze account](#101-how-to-unfreeze-account)
-- [11. Debug commands](#11-debug-commands)
-  - [11.1. Debug transaction](#111-debug-transaction)
-  - [11.2. Debug call](#112-debug-call)
-  - [11.3. Debug run](#113-debug-run)
-  - [11.4. Debug replay transaction on the saved account state](#114-debug-replay-transaction-on-the-saved-account-state)
-  - [11.5. Debug deploy](#115-debug-deploy)
-  - [11.6. Debug message](#116-debug-message)
-  - [11.7. Render UML sequence diagram](#117-render-uml-sequence-diagram)
-- [12. Alias functionality](#12-alias-functionality)
-- [13. Evercloud authentication](#13-evercloud-authentication)
+  - [10. Fetch and replay](#10-fetch-and-replay)
+    - [10.1. How to unfreeze account](#101-how-to-unfreeze-account)
+    - [10.2. Fetch block command](#102-fetch-block-command)
+  - [11. Debug commands](#11-debug-commands)
+    - [11.1. Debug transaction](#111-debug-transaction)
+    - [11.2. Debug call](#112-debug-call)
+    - [11.3. Debug run](#113-debug-run)
+    - [11.4. Debug replay transaction on the saved account state](#114-debug-replay-transaction-on-the-saved-account-state)
+    - [11.5. Debug deploy](#115-debug-deploy)
+    - [11.6. Debug message](#116-debug-message)
+    - [11.7. Debug account](#117-debug-account)
+    - [11.8. Render UML sequence diagram](#118-render-uml-sequence-diagram)
+    - [Caveat](#caveat)
+  - [12. Alias functionality](#12-alias-functionality)
+  - [13. Evercloud authentication](#13-evercloud-authentication)
+  - [14. Sold](#14-sold)
 
 # 1. Installation
 
