@@ -41,14 +41,14 @@ tokio-retry = "0.3.0"
 url = "2.5.0"
 
 tvm_abi = { git = "https://github.com/tvmlabs/tvm-abi", tag = "3.0.0" }
+tvm_assembler = { git = "https://github.com/tvmlabs/tvm-assembler", tag = "2.0.0" }
 tvm_block = { git = "https://github.com/tvmlabs/tvm-block", tag = "2.0.0" }
 tvm_block_json = { git = "https://github.com/tvmlabs/tvm-block-json", tag = "0.8.0" }
 # tvm_client = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "feature/masterchain-free" }
-tvm_assembler = { git = "https://github.com/tvmlabs/tvm-assembler", tag = "2.0.0" }
-tvm_client = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "rc-1.46.0" }
+tvm_client = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "rc-1.46.0", default-features = false, features = ["std", "rustls-tls-webpki-roots"] }
 tvm_executor = { git = "https://github.com/tvmlabs/tvm-executor", tag = "2.0.0" }
 # tvm_sdk = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "feature/masterchain-free" }
-tvm_sdk = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "rc-1.46.0" }
+tvm_sdk = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "rc-1.46.0", default-features = false }
 tvm_types = { git = "https://github.com/tvmlabs/tvm-types", tag = "3.0.1" }
 tvm_vm = { git = "https://github.com/tvmlabs/tvm-vm", tag = "2.0.0" }
 
