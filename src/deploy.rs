@@ -8,14 +8,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific TON DEV software governing permissions and
 // limitations under the License.
-use ton_client::abi::encode_message;
-use ton_client::abi::Abi;
-use ton_client::abi::CallSet;
-use ton_client::abi::DeploySet;
-use ton_client::abi::FunctionHeader;
-use ton_client::abi::ParamsOfEncodeMessage;
-use ton_client::abi::Signer;
-use ton_client::crypto::KeyPair;
+use tvm_client::abi::encode_message;
+use tvm_client::abi::Abi;
+use tvm_client::abi::CallSet;
+use tvm_client::abi::DeploySet;
+use tvm_client::abi::FunctionHeader;
+use tvm_client::abi::ParamsOfEncodeMessage;
+use tvm_client::abi::Signer;
+use tvm_client::crypto::KeyPair;
 
 use crate::call::emulate_locally;
 use crate::call::process_message;
@@ -163,7 +163,7 @@ pub async fn prepare_deploy_message_params(
         )
         .await?
     } else {
-        let tvc_cell = ton_types::boc::read_single_root_boc(&tvc_bytes).unwrap();
+        let tvc_cell = tvm_types::boc::read_single_root_boc(&tvc_bytes).unwrap();
         let tvc_hash = tvc_cell.repr_hash();
         format!("{}:{}", wc, tvc_hash.as_hex_string())
     };

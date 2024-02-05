@@ -1,8 +1,8 @@
 use serde_json::json;
 use serde_json::Value;
-use ton_client::abi::Abi;
-use ton_client::debot::DebotInterface;
-use ton_client::debot::InterfaceResult;
+use tvm_client::abi::Abi;
+use tvm_client::debot::DebotInterface;
+use tvm_client::debot::InterfaceResult;
 
 const ECHO_ID: &str = "f6927c0d4bdb69e1b52d27f018d156ff04152f00558042ff674f0fec32e4369d";
 

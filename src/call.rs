@@ -12,24 +12,24 @@ use std::str::FromStr;
 
 use serde_json::json;
 use serde_json::Value;
-use ton_abi::ParamType;
-use ton_block::Account;
-use ton_block::Serializable;
-use ton_client::abi::decode_message;
-use ton_client::abi::encode_message;
-use ton_client::abi::Abi;
-use ton_client::abi::ParamsOfDecodeMessage;
-use ton_client::abi::ParamsOfEncodeMessage;
-use ton_client::error::ClientError;
-use ton_client::processing::send_message;
-use ton_client::processing::wait_for_transaction;
-use ton_client::processing::ParamsOfProcessMessage;
-use ton_client::processing::ParamsOfSendMessage;
-use ton_client::processing::ParamsOfWaitForTransaction;
-use ton_client::processing::ProcessingEvent;
-use ton_client::tvm::run_executor;
-use ton_client::tvm::AccountForExecutor;
-use ton_client::tvm::ParamsOfRunExecutor;
+use tvm_abi::ParamType;
+use tvm_block::Account;
+use tvm_block::Serializable;
+use tvm_client::abi::decode_message;
+use tvm_client::abi::encode_message;
+use tvm_client::abi::Abi;
+use tvm_client::abi::ParamsOfDecodeMessage;
+use tvm_client::abi::ParamsOfEncodeMessage;
+use tvm_client::error::ClientError;
+use tvm_client::processing::send_message;
+use tvm_client::processing::wait_for_transaction;
+use tvm_client::processing::ParamsOfProcessMessage;
+use tvm_client::processing::ParamsOfSendMessage;
+use tvm_client::processing::ParamsOfWaitForTransaction;
+use tvm_client::processing::ProcessingEvent;
+use tvm_client::tvm::run_executor;
+use tvm_client::tvm::AccountForExecutor;
+use tvm_client::tvm::ParamsOfRunExecutor;
 
 use crate::config::Config;
 use crate::convert;
@@ -130,10 +130,10 @@ pub async fn emulate_locally(
     let state_boc = query_account_field(ton.clone(), addr, "boc").await;
     if state_boc.is_err() {
         if is_fee {
-            let addr = ton_block::MsgAddressInt::from_str(addr)
+            let addr = tvm_block::MsgAddressInt::from_str(addr)
                 .map_err(|e| format!("couldn't decode address: {}", e))?;
             state = base64::encode(
-                &ton_types::write_boc(&Account::with_address(addr).serialize().map_err(|e| {
+                &tvm_types::write_boc(&Account::with_address(addr).serialize().map_err(|e| {
                     format!("couldn't create dummy account for deploy emulation: {}", e)
                 })?)
                 .map_err(|e| format!("failed to serialize account cell: {}", e))?,
@@ -236,7 +236,7 @@ pub async fn process_message(
         }
     };
     let res = if !config.is_json {
-        ton_client::processing::process_message(
+        tvm_client::processing::process_message(
             ton.clone(),
             ParamsOfProcessMessage {
                 message_encode_params: msg.clone(),
@@ -247,7 +247,7 @@ pub async fn process_message(
         )
         .await
     } else {
-        ton_client::processing::process_message(
+        tvm_client::processing::process_message(
             ton.clone(),
             ParamsOfProcessMessage {
                 message_encode_params: msg.clone(),

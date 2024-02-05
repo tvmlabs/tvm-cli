@@ -20,38 +20,37 @@ use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
 use clap::ArgMatches;
-use failure::err_msg;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
-use ton_block::Account;
-use ton_block::Block;
-use ton_block::ConfigParams;
-use ton_block::Deserializable;
-use ton_block::HashmapAugType;
-use ton_block::Message;
-use ton_block::Serializable;
-use ton_block::Transaction;
-use ton_block::TransactionDescr;
-use ton_client::net::aggregate_collection;
-use ton_client::net::query_collection;
-use ton_client::net::AggregationFn;
-use ton_client::net::FieldAggregation;
-use ton_client::net::OrderBy;
-use ton_client::net::ParamsOfAggregateCollection;
-use ton_client::net::ParamsOfQueryCollection;
-use ton_client::net::SortDirection;
-use ton_executor::BlockchainConfig;
-use ton_executor::ExecuteParams;
-use ton_executor::OrdinaryTransactionExecutor;
-use ton_executor::TickTockTransactionExecutor;
-use ton_executor::TransactionExecutor;
-use ton_types::write_boc;
-use ton_types::BuilderData;
-use ton_types::SliceData;
-use ton_types::UInt256;
-use ton_vm::executor::Engine;
-use ton_vm::executor::EngineTraceInfo;
+use tvm_block::Account;
+use tvm_block::Block;
+use tvm_block::ConfigParams;
+use tvm_block::Deserializable;
+use tvm_block::HashmapAugType;
+use tvm_block::Message;
+use tvm_block::Serializable;
+use tvm_block::Transaction;
+use tvm_block::TransactionDescr;
+use tvm_client::net::aggregate_collection;
+use tvm_client::net::query_collection;
+use tvm_client::net::AggregationFn;
+use tvm_client::net::FieldAggregation;
+use tvm_client::net::OrderBy;
+use tvm_client::net::ParamsOfAggregateCollection;
+use tvm_client::net::ParamsOfQueryCollection;
+use tvm_client::net::SortDirection;
+use tvm_executor::BlockchainConfig;
+use tvm_executor::ExecuteParams;
+use tvm_executor::OrdinaryTransactionExecutor;
+use tvm_executor::TickTockTransactionExecutor;
+use tvm_executor::TransactionExecutor;
+use tvm_types::write_boc;
+use tvm_types::BuilderData;
+use tvm_types::SliceData;
+use tvm_types::UInt256;
+use tvm_vm::executor::Engine;
+use tvm_vm::executor::EngineTraceInfo;
 
 use crate::config::Config;
 use crate::helpers::create_client;
@@ -73,9 +72,9 @@ pub fn construct_blockchain_config(config_account: &Account) -> Result<Blockchai
 
 fn construct_blockchain_config_err(
     config_account: &Account,
-) -> ton_types::Result<BlockchainConfig> {
+) -> tvm_types::Result<BlockchainConfig> {
     let config_cell =
-        config_account.get_data().ok_or(err_msg("Failed to get account's data"))?.reference(0).ok();
+        config_account.get_data().ok_or(anyhow::anyhow!("Failed to get account's data"))?.reference(0).ok();
     let config_params =
         ConfigParams::with_address_and_params(UInt256::with_array([0x55; 32]), config_cell);
     BlockchainConfig::with_config(config_params)
@@ -538,9 +537,9 @@ pub async fn replay(
     Err("Specified transaction was not found.".to_string())
 }
 
-pub async fn fetch_block(config: &Config, block_id: &str, filename: &str) -> ton_types::Status {
+pub async fn fetch_block(config: &Config, block_id: &str, filename: &str) -> tvm_types::Status {
     let context =
-        create_client(config).map_err(|e| err_msg(format!("Failed to create ctx: {}", e)))?;
+        create_client(config).map_err(|e| anyhow::anyhow!(format!("Failed to create ctx: {}", e)))?;
 
     let block = query_collection(
         context.clone(),
@@ -560,7 +559,7 @@ pub async fn fetch_block(config: &Config, block_id: &str, filename: &str) -> ton
     .await?;
 
     if block.result.len() != 1 {
-        return Err(err_msg("Failed to fetch the block"));
+        return Err(anyhow::anyhow!("Failed to fetch the block"));
     }
 
     let mut accounts = vec![];
@@ -589,14 +588,14 @@ pub async fn fetch_block(config: &Config, block_id: &str, filename: &str) -> ton
     })?;
 
     if accounts.is_empty() {
-        return Err(err_msg("The block is empty"));
+        return Err(anyhow::anyhow!("The block is empty"));
     }
 
     for (account, _) in &accounts {
         println!("Fetching transactions of {}", account);
         fetch(config, account.as_str(), format!("{}.txns", account).as_str(), Some(end_lt), false)
             .await
-            .map_err(err_msg)?;
+            .map_err(|err| anyhow::anyhow!(err))?;
     }
 
     let config_txns_path = format!("{}.txns", CONFIG_ADDR);
@@ -604,7 +603,7 @@ pub async fn fetch_block(config: &Config, block_id: &str, filename: &str) -> ton
         println!("Fetching transactions of {}", CONFIG_ADDR);
         fetch(config, CONFIG_ADDR, config_txns_path.as_str(), Some(end_lt), false)
             .await
-            .map_err(err_msg)?;
+            .map_err(|err| anyhow::anyhow!(err))?;
     }
 
     let acc = accounts[0].0.as_str();
@@ -624,7 +623,7 @@ pub async fn fetch_block(config: &Config, block_id: &str, filename: &str) -> ton
             None,
         )
         .await
-        .map_err(err_msg)?;
+        .map_err(|err| anyhow::anyhow!(err))?;
     } else {
         println!("Using pre-computed config {}", config_path);
     }
@@ -651,7 +650,7 @@ pub async fn fetch_block(config: &Config, block_id: &str, filename: &str) -> ton
                         None,
                     )
                     .await
-                    .map_err(err_msg)
+                    .map_err(|err| anyhow::anyhow!(err))
                     .unwrap();
                 }
             })

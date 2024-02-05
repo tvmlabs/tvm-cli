@@ -23,41 +23,41 @@ use clap::ArgMatches;
 use clap::SubCommand;
 use serde_json::json;
 use serde_json::Value;
-use ton_block::Account;
-use ton_block::ConfigParamEnum;
-use ton_block::CurrencyCollection;
-use ton_block::Deserializable;
-use ton_block::GasLimitsPrices;
-use ton_block::InRefValue;
-use ton_block::Message;
-use ton_block::MsgAddressInt;
-use ton_block::Serializable;
-use ton_block::TrComputePhase;
-use ton_block::Transaction;
-use ton_block::TransactionTickTock;
-use ton_client::abi::encode_message;
-use ton_client::abi::CallSet;
-use ton_client::abi::FunctionHeader;
-use ton_client::abi::ParamsOfEncodeMessage;
-use ton_client::abi::Signer;
-use ton_client::boc::internal::deserialize_cell_from_base64;
-use ton_client::error::ClientError;
-use ton_client::net::query_collection;
-use ton_client::net::OrderBy;
-use ton_client::net::ParamsOfQueryCollection;
-use ton_client::net::SortDirection;
-use ton_executor::BlockchainConfig;
-use ton_executor::ExecuteParams;
-use ton_executor::OrdinaryTransactionExecutor;
-use ton_executor::TickTockTransactionExecutor;
-use ton_executor::TransactionExecutor;
-use ton_labs_assembler::DbgInfo;
-use ton_types::AccountId;
-use ton_types::Cell;
-use ton_types::UInt256;
-use ton_vm::executor::Engine;
-use ton_vm::executor::EngineTraceInfo;
-use ton_vm::executor::EngineTraceInfoType;
+use tvm_block::Account;
+use tvm_block::ConfigParamEnum;
+use tvm_block::CurrencyCollection;
+use tvm_block::Deserializable;
+use tvm_block::GasLimitsPrices;
+use tvm_block::InRefValue;
+use tvm_block::Message;
+use tvm_block::MsgAddressInt;
+use tvm_block::Serializable;
+use tvm_block::TrComputePhase;
+use tvm_block::Transaction;
+use tvm_block::TransactionTickTock;
+use tvm_client::abi::encode_message;
+use tvm_client::abi::CallSet;
+use tvm_client::abi::FunctionHeader;
+use tvm_client::abi::ParamsOfEncodeMessage;
+use tvm_client::abi::Signer;
+use tvm_client::boc::internal::deserialize_cell_from_base64;
+use tvm_client::error::ClientError;
+use tvm_client::net::query_collection;
+use tvm_client::net::OrderBy;
+use tvm_client::net::ParamsOfQueryCollection;
+use tvm_client::net::SortDirection;
+use tvm_executor::BlockchainConfig;
+use tvm_executor::ExecuteParams;
+use tvm_executor::OrdinaryTransactionExecutor;
+use tvm_executor::TickTockTransactionExecutor;
+use tvm_executor::TransactionExecutor;
+use tvm_assembler::DbgInfo;
+use tvm_types::AccountId;
+use tvm_types::Cell;
+use tvm_types::UInt256;
+use tvm_vm::executor::Engine;
+use tvm_vm::executor::EngineTraceInfo;
+use tvm_vm::executor::EngineTraceInfoType;
 
 use crate::config::Config;
 use crate::contract_data_from_matches_or_config_alias;
@@ -1050,7 +1050,7 @@ pub async fn decode_messages(
         let msg_cell =
             msg.serialize().map_err(|e| format!("Failed to serialize out message: {}", e))?;
         ser_msg["id"] = msg_cell.repr_hash().as_hex_string().into();
-        let msg_bytes = ton_types::write_boc(&msg_cell)
+        let msg_bytes = tvm_types::write_boc(&msg_cell)
             .map_err(|e| format!("failed to encode out message: {e}"))?;
         ser_msg["Message_base64"] = base64::encode(msg_bytes).into();
         let body = &ser_msg["BodyCall"];
@@ -1068,7 +1068,7 @@ pub async fn decode_messages(
             Some(TrComputePhase::Vm(compute)) => (compute.exit_code, compute.gas_used.as_u64()),
             _ => (0, 0),
         };
-        // let _tr = match ton_block_json::debug_transaction(tr.clone()) {
+        // let _tr = match tvm_block_json::debug_transaction(tr.clone()) {
         //     Ok(tr) => serde_json::from_str::<Value>(&tr).unwrap(),
         //     Err(err) => err.to_string().into()
         // };
@@ -1265,9 +1265,9 @@ pub async fn execute_debug(
 
     executor.execute_with_libs_and_params(message, account_root, params).map_err(|e| {
         let exit_code = match e.downcast_ref() {
-            Some(ton_executor::ExecutorError::NoAcceptError(exit_code, _)) => *exit_code,
-            Some(ton_executor::ExecutorError::TvmExceptionCode(exit_code)) => *exit_code as i32,
-            None => ton_vm::error::tvm_exception_or_custom_code(&e),
+            Some(tvm_executor::ExecutorError::NoAcceptError(exit_code, _)) => *exit_code,
+            Some(tvm_executor::ExecutorError::TvmExceptionCode(exit_code)) => *exit_code as i32,
+            None => tvm_vm::error::tvm_exception_or_custom_code(&e),
             _ => return format!("Debug failed: {}", e),
         };
         let result = json!({
@@ -1603,8 +1603,8 @@ async fn make_sequence_diagram(
 
         let desc = tr.read_description().map_err(|e| format!("Failed to read tr desc: {}", e))?;
         let (tr_color, tr_gas) = match desc.compute_phase_ref() {
-            None | Some(ton_block::TrComputePhase::Skipped(_)) => ("", None),
-            Some(ton_block::TrComputePhase::Vm(tr_compute_phase_vm)) => {
+            None | Some(tvm_block::TrComputePhase::Skipped(_)) => ("", None),
+            Some(tvm_block::TrComputePhase::Vm(tr_compute_phase_vm)) => {
                 let gas = tr_compute_phase_vm.gas_used.to_string();
                 if tr_compute_phase_vm.success {
                     ("#YellowGreen", Some(gas))

@@ -12,26 +12,26 @@
 use num_bigint::BigUint;
 use serde_json::json;
 use serde_json::Value;
-use ton_abi::Contract;
-use ton_abi::Token;
-use ton_abi::TokenValue;
-use ton_abi::Uint;
-use ton_block::ExternalInboundMessageHeader;
-use ton_block::Grams;
-use ton_block::Message;
-use ton_block::MsgAddressExt;
-use ton_block::MsgAddressInt;
-use ton_block::Serializable;
-use ton_client::boc::get_blockchain_config;
-use ton_client::boc::ParamsOfGetBlockchainConfig;
-use ton_client::net::OrderBy;
-use ton_client::net::SortDirection;
-use ton_types::ed25519_create_private_key;
-use ton_types::ed25519_sign_with_secret;
-use ton_types::BuilderData;
-use ton_types::Cell;
-use ton_types::IBitstring;
-use ton_types::SliceData;
+use tvm_abi::Contract;
+use tvm_abi::Token;
+use tvm_abi::TokenValue;
+use tvm_abi::Uint;
+use tvm_block::ExternalInboundMessageHeader;
+use tvm_block::Grams;
+use tvm_block::Message;
+use tvm_block::MsgAddressExt;
+use tvm_block::MsgAddressInt;
+use tvm_block::Serializable;
+use tvm_client::boc::get_blockchain_config;
+use tvm_client::boc::ParamsOfGetBlockchainConfig;
+use tvm_client::net::OrderBy;
+use tvm_client::net::SortDirection;
+use tvm_types::ed25519_create_private_key;
+use tvm_types::ed25519_sign_with_secret;
+use tvm_types::BuilderData;
+use tvm_types::Cell;
+use tvm_types::IBitstring;
+use tvm_types::SliceData;
 
 use crate::config::Config;
 use crate::helpers::create_client_verbose;
@@ -357,7 +357,7 @@ pub async fn gen_update_config_message(
 ) -> Result<(), String> {
     let config_master_address = std::fs::read(&*(config_master_file.to_string() + ".addr"))
         .map_err(|e| format!(r#"failed to read "config_master": {}"#, e))?;
-    let config_account = ton_types::AccountId::from_raw(config_master_address, 32 * 8);
+    let config_account = tvm_types::AccountId::from_raw(config_master_address, 32 * 8);
 
     let private_key_of_config_account =
         std::fs::read(&*(config_master_file.to_string() + ".pk"))
@@ -423,7 +423,7 @@ pub fn serialize_config_param(config_str: &str) -> Result<(Cell, u32), String> {
         .parse::<u32>()
         .map_err(|e| format!(r#""new_param_file" is not a valid json: {}"#, e))?;
 
-    let config_params = ton_block_json::parse_config(config_json)
+    let config_params = tvm_block_json::parse_config(config_json)
         .map_err(|e| format!(r#"failed to parse config params from "new_param_file": {}"#, e))?;
 
     let config_param = config_params

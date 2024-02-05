@@ -16,7 +16,7 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 use serde::Serialize;
-use ton_client::abi::AbiContract;
+use tvm_client::abi::AbiContract;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ContractData {

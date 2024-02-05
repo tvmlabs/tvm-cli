@@ -11,9 +11,9 @@
 use std::fs::OpenOptions;
 
 use serde_json::json;
-use ton_client::utils::convert_address;
-use ton_client::utils::AddressStringFormat;
-use ton_client::utils::ParamsOfConvertAddress;
+use tvm_client::utils::convert_address;
+use tvm_client::utils::AddressStringFormat;
+use tvm_client::utils::ParamsOfConvertAddress;
 
 use crate::config::Config;
 use crate::crypto::gen_seed_phrase;
@@ -160,8 +160,8 @@ fn update_contract_state(
     use std::io::Seek;
     use std::io::Write;
 
-    use ton_abi::Contract;
-    use ton_sdk::ContractImage;
+    use tvm_abi::Contract;
+    use tvm_sdk::ContractImage;
 
     let data_map_supported: bool = (Contract::load(abi.as_bytes())
         .map_err(|e| format!("unable to load abi: {}", e))?)

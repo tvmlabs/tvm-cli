@@ -15,17 +15,17 @@ use clap::ArgMatches;
 use clap::SubCommand;
 use serde::Serialize;
 use serde_json::json;
-use ton_block::Account;
-use ton_block::AccountStatus;
-use ton_block::Deserializable;
-use ton_block::Serializable;
-use ton_block::StateInit;
-use ton_client::abi::decode_account_data;
-use ton_client::abi::ParamsOfDecodeAccountData;
-use ton_types::read_single_root_boc;
-use ton_types::write_boc;
-use ton_types::Cell;
-use ton_types::SliceData;
+use tvm_block::Account;
+use tvm_block::AccountStatus;
+use tvm_block::Deserializable;
+use tvm_block::Serializable;
+use tvm_block::StateInit;
+use tvm_client::abi::decode_account_data;
+use tvm_client::abi::ParamsOfDecodeAccountData;
+use tvm_types::read_single_root_boc;
+use tvm_types::write_boc;
+use tvm_types::Cell;
+use tvm_types::SliceData;
 
 use crate::config::Config;
 use crate::decode::msg_printer::tree_of_cells_into_base64;
@@ -399,7 +399,7 @@ async fn decode_body(
     }
     let contr = load_ton_abi(abi_path, config).await?;
 
-    let (_, func_id, _) = ton_abi::Function::decode_header(
+    let (_, func_id, _) = tvm_abi::Function::decode_header(
         contr.version(),
         orig_slice.clone(),
         contr.header(),
@@ -429,7 +429,7 @@ async fn decode_body(
 }
 
 async fn decode_message(msg_boc: Vec<u8>, abi_path: Option<String>) -> Result<String, String> {
-    let tvm_msg = ton_sdk::Contract::deserialize_message(&msg_boc[..])
+    let tvm_msg = tvm_sdk::Contract::deserialize_message(&msg_boc[..])
         .map_err(|e| format!("failed to deserialize message boc: {}", e))?;
     let config = Config::default();
     let result = msg_printer::serialize_msg(&tvm_msg, abi_path, &config).await?;
@@ -485,15 +485,15 @@ async fn decode_tvc_command(m: &ArgMatches<'_>, config: &Config) -> Result<(), S
 pub mod msg_printer {
     use serde_json::json;
     use serde_json::Value;
-    use ton_block::CommonMsgInfo;
-    use ton_block::CurrencyCollection;
-    use ton_block::Grams;
-    use ton_block::Message;
-    use ton_block::StateInit;
-    use ton_client::boc::get_compiler_version;
-    use ton_client::boc::ParamsOfGetCompilerVersion;
-    use ton_types::write_boc;
-    use ton_types::Cell;
+    use tvm_block::CommonMsgInfo;
+    use tvm_block::CurrencyCollection;
+    use tvm_block::Grams;
+    use tvm_block::Message;
+    use tvm_block::StateInit;
+    use tvm_client::boc::get_compiler_version;
+    use tvm_client::boc::ParamsOfGetCompilerVersion;
+    use tvm_types::write_boc;
+    use tvm_types::Cell;
 
     use crate::helpers::create_client_local;
     use crate::helpers::decode_msg_body;

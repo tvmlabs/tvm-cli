@@ -5,10 +5,10 @@ use num_bigint::BigInt;
 use num_traits::cast::NumCast;
 use serde_json::Value;
 use tokio::sync::RwLock;
-use ton_client::debot::DebotInterface;
-use ton_client::debot::DebotInterfaceExecutor;
-use ton_client::encoding::decode_abi_bigint;
-use ton_client::encoding::decode_abi_number;
+use tvm_client::debot::DebotInterface;
+use tvm_client::debot::DebotInterfaceExecutor;
+use tvm_client::encoding::decode_abi_bigint;
+use tvm_client::encoding::decode_abi_number;
 
 use super::echo::Echo;
 use super::stdout::Stdout;

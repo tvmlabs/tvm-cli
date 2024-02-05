@@ -8,18 +8,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific TON DEV software governing permissions and
 // limitations under the License.
-use ton_client::crypto::hdkey_derive_from_xprv_path;
-use ton_client::crypto::hdkey_secret_from_xprv;
-use ton_client::crypto::hdkey_xprv_from_mnemonic;
-use ton_client::crypto::mnemonic_from_random;
-use ton_client::crypto::nacl_sign_keypair_from_secret_key;
-use ton_client::crypto::KeyPair;
-use ton_client::crypto::MnemonicDictionary;
-use ton_client::crypto::ParamsOfHDKeyDeriveFromXPrvPath;
-use ton_client::crypto::ParamsOfHDKeySecretFromXPrv;
-use ton_client::crypto::ParamsOfHDKeyXPrvFromMnemonic;
-use ton_client::crypto::ParamsOfMnemonicFromRandom;
-use ton_client::crypto::ParamsOfNaclSignKeyPairFromSecret;
+use tvm_client::crypto::hdkey_derive_from_xprv_path;
+use tvm_client::crypto::hdkey_secret_from_xprv;
+use tvm_client::crypto::hdkey_xprv_from_mnemonic;
+use tvm_client::crypto::mnemonic_from_random;
+use tvm_client::crypto::nacl_sign_keypair_from_secret_key;
+use tvm_client::crypto::KeyPair;
+use tvm_client::crypto::MnemonicDictionary;
+use tvm_client::crypto::ParamsOfHDKeyDeriveFromXPrvPath;
+use tvm_client::crypto::ParamsOfHDKeySecretFromXPrv;
+use tvm_client::crypto::ParamsOfHDKeyXPrvFromMnemonic;
+use tvm_client::crypto::ParamsOfMnemonicFromRandom;
+use tvm_client::crypto::ParamsOfNaclSignKeyPairFromSecret;
 
 use crate::helpers::check_dir;
 use crate::helpers::create_client_local;

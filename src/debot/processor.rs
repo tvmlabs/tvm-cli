@@ -1,9 +1,9 @@
 use std::vec::IntoIter;
 
 use serde_json::Value;
-use ton_client::abi::Abi;
-use ton_client::abi::CallSet;
-use ton_client::debot::DebotActivity;
+use tvm_client::abi::Abi;
+use tvm_client::abi::CallSet;
+use tvm_client::debot::DebotActivity;
 
 use super::ApproveKind;
 use super::ChainLink;

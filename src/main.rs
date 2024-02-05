@@ -86,8 +86,8 @@ use test::create_test_command;
 use test::create_test_sign_command;
 use test::test_command;
 use test::test_sign_command;
-use ton_client::abi::CallSet;
-use ton_client::abi::ParamsOfEncodeMessageBody;
+use tvm_client::abi::CallSet;
+use tvm_client::abi::ParamsOfEncodeMessageBody;
 use voting::create_proposal;
 use voting::decode_proposal;
 use voting::vote;
@@ -1245,7 +1245,7 @@ async fn body_command(matches: &ArgMatches<'_>, config: &Config) -> Result<(), S
         .map_err(|e| format!("arguments are not in json format: {}", e))?;
 
     let client = create_client_local()?;
-    let body = ton_client::abi::encode_message_body(
+    let body = tvm_client::abi::encode_message_body(
         client.clone(),
         ParamsOfEncodeMessageBody {
             abi: load_abi(abi.as_ref().unwrap(), config).await?,

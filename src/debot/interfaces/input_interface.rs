@@ -3,9 +3,9 @@ use std::sync::Arc;
 use serde_json::json;
 use serde_json::Value;
 use tokio::sync::RwLock;
-use ton_client::abi::Abi;
-use ton_client::debot::DebotInterface;
-use ton_client::debot::InterfaceResult;
+use tvm_client::abi::Abi;
+use tvm_client::debot::DebotInterface;
+use tvm_client::debot::InterfaceResult;
 
 use super::dinterface::decode_answer_id;
 use super::dinterface::decode_prompt;

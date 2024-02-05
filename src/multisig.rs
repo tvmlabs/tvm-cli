@@ -15,12 +15,12 @@ use clap::Arg;
 use clap::ArgMatches;
 use clap::SubCommand;
 use serde_json::json;
-use ton_client::abi::encode_message_body;
-use ton_client::abi::Abi;
-use ton_client::abi::AbiContract;
-use ton_client::abi::AbiParam;
-use ton_client::abi::CallSet;
-use ton_client::abi::ParamsOfEncodeMessageBody;
+use tvm_client::abi::encode_message_body;
+use tvm_client::abi::Abi;
+use tvm_client::abi::AbiContract;
+use tvm_client::abi::AbiParam;
+use tvm_client::abi::CallSet;
+use tvm_client::abi::ParamsOfEncodeMessageBody;
 
 use crate::call;
 use crate::config::Config;

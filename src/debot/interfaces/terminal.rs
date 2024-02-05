@@ -2,10 +2,10 @@ use std::io::Read;
 
 use serde_json::json;
 use serde_json::Value;
-use ton_client::abi::Abi;
-use ton_client::debot::DebotInterface;
-use ton_client::debot::InterfaceResult;
-use ton_client::encoding::decode_abi_bigint;
+use tvm_client::abi::Abi;
+use tvm_client::debot::DebotInterface;
+use tvm_client::debot::InterfaceResult;
+use tvm_client::encoding::decode_abi_bigint;
 
 use super::dinterface::decode_answer_id;
 use super::dinterface::decode_bool_arg;

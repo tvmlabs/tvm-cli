@@ -4,11 +4,11 @@ use std::io::Read;
 use std::io::Write;
 use std::io::{self};
 
-use ton_client::crypto::get_signing_box;
-use ton_client::crypto::remove_signing_box;
-use ton_client::crypto::KeyPair;
-use ton_client::crypto::RegisteredSigningBox;
-use ton_client::crypto::SigningBoxHandle;
+use tvm_client::crypto::get_signing_box;
+use tvm_client::crypto::remove_signing_box;
+use tvm_client::crypto::KeyPair;
+use tvm_client::crypto::RegisteredSigningBox;
+use tvm_client::crypto::SigningBoxHandle;
 
 use super::term_browser::input;
 use crate::crypto::load_keypair;

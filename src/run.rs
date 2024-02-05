@@ -12,15 +12,15 @@
 use clap::ArgMatches;
 use serde_json::Map;
 use serde_json::Value;
-use ton_block::Account;
-use ton_block::Deserializable;
-use ton_block::Serializable;
-use ton_client::abi::FunctionHeader;
-use ton_client::tvm::run_get;
-use ton_client::tvm::run_tvm;
-use ton_client::tvm::ExecutionOptions;
-use ton_client::tvm::ParamsOfRunGet;
-use ton_client::tvm::ParamsOfRunTvm;
+use tvm_block::Account;
+use tvm_block::Deserializable;
+use tvm_block::Serializable;
+use tvm_client::abi::FunctionHeader;
+use tvm_client::tvm::run_get;
+use tvm_client::tvm::run_tvm;
+use tvm_client::tvm::ExecutionOptions;
+use tvm_client::tvm::ParamsOfRunGet;
+use tvm_client::tvm::ParamsOfRunTvm;
 
 use crate::call::print_json_result;
 use crate::config::Config;
@@ -212,7 +212,7 @@ fn prepare_execution_options(bc_config: Option<&str>) -> Result<Option<Execution
     if let Some(config) = bc_config {
         let mut bytes = std::fs::read(config)
             .map_err(|e| format!("Failed to read data from file {config}: {e}"))?;
-        let cell = ton_types::read_single_root_boc(&bytes)
+        let cell = tvm_types::read_single_root_boc(&bytes)
             .map_err(|e| format!("Failed to deserialize {config}: {e}"))?;
         if let Ok(acc) = Account::construct_from_cell(cell.clone()) {
             let config = construct_blockchain_config(&acc)?;

@@ -16,26 +16,26 @@ use clap::Arg;
 use clap::ArgMatches;
 use clap::SubCommand;
 use serde_json::json;
-use ton_block::Account;
-use ton_block::ConfigParams;
-use ton_block::CurrencyCollection;
-use ton_block::Deserializable;
-use ton_block::Message;
-use ton_block::Serializable;
-use ton_block::TickTock;
-use ton_client::abi::encode_internal_message;
-use ton_client::abi::encode_message;
-use ton_client::abi::CallSet;
-use ton_client::abi::DeploySet;
-use ton_client::abi::FunctionHeader;
-use ton_client::abi::ParamsOfEncodeInternalMessage;
-use ton_client::abi::ParamsOfEncodeMessage;
-use ton_client::abi::Signer as AbiSigner;
-use ton_types::ed25519_sign_with_secret;
-use ton_types::read_single_root_boc;
-use ton_types::write_boc;
-use ton_types::BuilderData;
-use ton_types::SliceData;
+use tvm_block::Account;
+use tvm_block::ConfigParams;
+use tvm_block::CurrencyCollection;
+use tvm_block::Deserializable;
+use tvm_block::Message;
+use tvm_block::Serializable;
+use tvm_block::TickTock;
+use tvm_client::abi::encode_internal_message;
+use tvm_client::abi::encode_message;
+use tvm_client::abi::CallSet;
+use tvm_client::abi::DeploySet;
+use tvm_client::abi::FunctionHeader;
+use tvm_client::abi::ParamsOfEncodeInternalMessage;
+use tvm_client::abi::ParamsOfEncodeMessage;
+use tvm_client::abi::Signer as AbiSigner;
+use tvm_types::ed25519_sign_with_secret;
+use tvm_types::read_single_root_boc;
+use tvm_types::write_boc;
+use tvm_types::BuilderData;
+use tvm_types::SliceData;
 
 use crate::config::Config;
 use crate::crypto::load_keypair;
@@ -452,12 +452,12 @@ pub fn test_config_command(matches: &ArgMatches<'_>, config: &Config) -> Result<
                 .config_params
                 .set_builder(key, &value)
                 .map_err(|e| format!("Failed to store config param with index {index}: {e}"))?;
-            ton_block_json::serialize_config_param(&params, index)
+            tvm_block_json::serialize_config_param(&params, index)
                 .map_err(|e| format!("Failed to serialize config param with index {index}: {e}"))?
         } else {
             let params = ConfigParams::construct_from_cell(cell)
                 .map_err(|e| format!("Failed to construct ConfigParams: {e}"))?;
-            ton_block_json::serialize_config_param(&params, 0)
+            tvm_block_json::serialize_config_param(&params, 0)
                 .map_err(|e| format!("Failed to serialize config params: {e}"))?
         };
         println!("{}", result);

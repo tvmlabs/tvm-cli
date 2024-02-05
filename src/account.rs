@@ -12,16 +12,16 @@ use std::sync::Arc;
 
 use serde_json::json;
 use serde_json::Value;
-use ton_block::Account;
-use ton_block::Deserializable;
-use ton_block::Serializable;
-use ton_client::error::ClientError;
-use ton_client::net::query_collection;
-use ton_client::net::ParamsOfQueryCollection;
-use ton_client::net::ParamsOfSubscribeCollection;
-use ton_client::net::ResultOfSubscription;
-use ton_client::utils::calc_storage_fee;
-use ton_client::utils::ParamsOfCalcStorageFee;
+use tvm_block::Account;
+use tvm_block::Deserializable;
+use tvm_block::Serializable;
+use tvm_client::error::ClientError;
+use tvm_client::net::query_collection;
+use tvm_client::net::ParamsOfQueryCollection;
+use tvm_client::net::ParamsOfSubscribeCollection;
+use tvm_client::net::ResultOfSubscription;
+use tvm_client::utils::calc_storage_fee;
+use tvm_client::utils::ParamsOfCalcStorageFee;
 
 use crate::config::Config;
 use crate::decode::print_account_data;
@@ -356,7 +356,7 @@ pub async fn wait_for_change(
 ) -> Result<(), String> {
     let context = create_client_verbose(config)?;
 
-    let query = ton_client::net::query_collection(
+    let query = tvm_client::net::query_collection(
         context.clone(),
         ParamsOfQueryCollection {
             collection: "accounts".to_owned(),
@@ -398,7 +398,7 @@ pub async fn wait_for_change(
         }
     };
 
-    let subscription = ton_client::net::subscribe_collection(
+    let subscription = tvm_client::net::subscribe_collection(
         context.clone(),
         ParamsOfSubscribeCollection {
             collection: "accounts".to_owned(),
@@ -424,7 +424,7 @@ pub async fn wait_for_change(
     });
 
     let res = r.recv().await.ok_or_else(|| "Sender has dropped".to_owned())?;
-    ton_client::net::unsubscribe(context.clone(), subscription)
+    tvm_client::net::unsubscribe(context.clone(), subscription)
         .await
         .map_err(|e| format!("Failed to unsubscribe: {}", e))?;
 

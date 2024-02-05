@@ -1,15 +1,15 @@
 use std::io::{self};
 
-use ton_client::crypto::register_encryption_box;
-use ton_client::crypto::remove_encryption_box;
-use ton_client::crypto::ChaCha20EncryptionBox;
-use ton_client::crypto::ChaCha20ParamsEB;
-use ton_client::crypto::EncryptionBoxHandle;
-use ton_client::crypto::NaclBoxParamsEB;
-use ton_client::crypto::NaclEncryptionBox;
-use ton_client::crypto::NaclSecretBoxParamsEB;
-use ton_client::crypto::NaclSecretEncryptionBox;
-use ton_client::crypto::RegisteredEncryptionBox;
+use tvm_client::crypto::register_encryption_box;
+use tvm_client::crypto::remove_encryption_box;
+use tvm_client::crypto::ChaCha20EncryptionBox;
+use tvm_client::crypto::ChaCha20ParamsEB;
+use tvm_client::crypto::EncryptionBoxHandle;
+use tvm_client::crypto::NaclBoxParamsEB;
+use tvm_client::crypto::NaclEncryptionBox;
+use tvm_client::crypto::NaclSecretBoxParamsEB;
+use tvm_client::crypto::NaclSecretEncryptionBox;
+use tvm_client::crypto::RegisteredEncryptionBox;
 
 use super::term_browser::input;
 use crate::crypto::load_keypair;

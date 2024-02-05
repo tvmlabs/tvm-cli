@@ -18,31 +18,31 @@ use std::time::SystemTime;
 use clap::ArgMatches;
 use serde_json::json;
 use serde_json::Value;
-use ton_block::Account;
-use ton_block::CurrencyCollection;
-use ton_block::Deserializable;
-use ton_block::MsgAddressInt;
-use ton_block::Serializable;
-use ton_block::StateInit;
-use ton_client::abi::Abi;
-use ton_client::abi::AbiConfig;
-use ton_client::abi::AbiContract;
-use ton_client::abi::DecodedMessageBody;
-use ton_client::abi::DeploySet;
-use ton_client::abi::ParamsOfDecodeMessageBody;
-use ton_client::abi::ParamsOfEncodeMessage;
-use ton_client::abi::Signer;
-use ton_client::crypto::CryptoConfig;
-use ton_client::crypto::KeyPair;
-use ton_client::crypto::MnemonicDictionary;
-use ton_client::error::ClientError;
-use ton_client::net::query_collection;
-use ton_client::net::NetworkConfig;
-use ton_client::net::OrderBy;
-use ton_client::net::ParamsOfQueryCollection;
-use ton_client::ClientConfig;
-use ton_client::ClientContext;
-use ton_executor::BlockchainConfig;
+use tvm_block::Account;
+use tvm_block::CurrencyCollection;
+use tvm_block::Deserializable;
+use tvm_block::MsgAddressInt;
+use tvm_block::Serializable;
+use tvm_block::StateInit;
+use tvm_client::abi::Abi;
+use tvm_client::abi::AbiConfig;
+use tvm_client::abi::AbiContract;
+use tvm_client::abi::DecodedMessageBody;
+use tvm_client::abi::DeploySet;
+use tvm_client::abi::ParamsOfDecodeMessageBody;
+use tvm_client::abi::ParamsOfEncodeMessage;
+use tvm_client::abi::Signer;
+use tvm_client::crypto::CryptoConfig;
+use tvm_client::crypto::KeyPair;
+use tvm_client::crypto::MnemonicDictionary;
+use tvm_client::error::ClientError;
+use tvm_client::net::query_collection;
+use tvm_client::net::NetworkConfig;
+use tvm_client::net::OrderBy;
+use tvm_client::net::ParamsOfQueryCollection;
+use tvm_client::ClientConfig;
+use tvm_client::ClientContext;
+use tvm_executor::BlockchainConfig;
 use url::Url;
 
 use crate::call::parse_params;
@@ -222,7 +222,7 @@ pub async fn query_raw(
         .transpose()
         .map_err(|e| format!("Failed to parse order field: {}", e))?;
 
-    let query = ton_client::net::query_collection(
+    let query = tvm_client::net::query_collection(
         context.clone(),
         ParamsOfQueryCollection {
             collection: collection.to_owned(),
@@ -317,7 +317,7 @@ pub async fn decode_msg_body(
     config: &Config,
 ) -> Result<DecodedMessageBody, String> {
     let abi = load_abi(abi_path, config).await?;
-    ton_client::abi::decode_message_body(
+    tvm_client::abi::decode_message_body(
         ton,
         ParamsOfDecodeMessageBody { abi, body: body.to_owned(), is_internal, ..Default::default() },
     )
@@ -340,12 +340,12 @@ pub async fn load_abi_str(abi_path: &str, config: &Config) -> Result<String, Str
 
 pub async fn load_abi(abi_path: &str, config: &Config) -> Result<Abi, String> {
     let abi_str = load_abi_str(abi_path, config).await?;
-    Ok(ton_client::abi::Abi::Json(abi_str))
+    Ok(tvm_client::abi::Abi::Json(abi_str))
 }
 
-pub async fn load_ton_abi(abi_path: &str, config: &Config) -> Result<ton_abi::Contract, String> {
+pub async fn load_ton_abi(abi_path: &str, config: &Config) -> Result<tvm_abi::Contract, String> {
     let abi_str = load_abi_str(abi_path, config).await?;
-    Ok(ton_abi::Contract::load(abi_str.as_bytes())
+    Ok(tvm_abi::Contract::load(abi_str.as_bytes())
         .map_err(|e| format!("Failed to load ABI: {}", e))?)
 }
 
@@ -400,7 +400,7 @@ pub async fn calc_acc_address(
             ..Default::default()
         }
     };
-    let result = ton_client::abi::encode_message(
+    let result = tvm_client::abi::encode_message(
         ton.clone(),
         ParamsOfEncodeMessage {
             abi,
@@ -456,7 +456,7 @@ pub async fn print_message(
     if body.is_some() {
         let body = body.unwrap();
         let def_config = Config::default();
-        let result = ton_client::abi::decode_message_body(
+        let result = tvm_client::abi::decode_message_body(
             ton.clone(),
             ParamsOfDecodeMessageBody {
                 abi: load_abi(abi, &def_config).await?,
@@ -1020,7 +1020,7 @@ pub fn blockchain_config_from_default_json() -> Result<BlockchainConfig, String>
 }"#;
     let map = serde_json::from_str::<serde_json::Map<String, Value>>(&json)
         .map_err(|e| format!("Failed to parse config params as json: {e}"))?;
-    let config_params = ton_block_json::parse_config(&map)
+    let config_params = tvm_block_json::parse_config(&map)
         .map_err(|e| format!("Failed to parse config params: {e}"))?;
     BlockchainConfig::with_config(config_params)
         .map_err(|e| format!("Failed to construct default config: {e}"))

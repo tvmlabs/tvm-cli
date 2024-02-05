@@ -13,12 +13,12 @@ use std::io;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use ton_client::crypto::SigningBoxHandle;
-use ton_client::debot::BrowserCallbacks;
-use ton_client::debot::DAction;
-use ton_client::debot::DebotActivity;
-use ton_client::debot::STATE_EXIT;
-use ton_client::error::ClientResult;
+use tvm_client::crypto::SigningBoxHandle;
+use tvm_client::debot::BrowserCallbacks;
+use tvm_client::debot::DAction;
+use tvm_client::debot::DebotActivity;
+use tvm_client::debot::STATE_EXIT;
+use tvm_client::error::ClientResult;
 
 use super::action_input;
 use super::input;
