@@ -22,6 +22,7 @@ use tvm_block::Serializable;
 use tvm_block::StateInit;
 use tvm_client::abi::decode_account_data;
 use tvm_client::abi::ParamsOfDecodeAccountData;
+use tvm_types::base64_decode;
 use tvm_types::read_single_root_boc;
 use tvm_types::write_boc;
 use tvm_types::Cell;
@@ -233,7 +234,7 @@ pub async fn print_account_data(
 
     let data = tree_of_cells_into_base64(account.get_data().as_ref())?;
     let data =
-        hex::encode(base64::decode(&data).map_err(|e| format!("Failed to decode base64: {}", e))?);
+        hex::encode(base64_decode(&data).map_err(|e| format!("Failed to decode base64: {}", e))?);
     print_account(
         &config,
         Some(state),
@@ -273,7 +274,7 @@ async fn decode_message_command(m: &ArgMatches<'_>, config: &Config) -> Result<(
             Err(e) => {
                 let message_str = String::from_utf8(msg_bytes)
                     .map_err(|_| format!("Failed to decode message from file: {e}"))?;
-                let message_bytes = base64::decode(&message_str)
+                let message_bytes = base64_decode(&message_str)
                     .map_err(|e2| format!("Failed to decode message data: {e2}"))?;
                 decode_message(message_bytes, abi)
                     .await
@@ -281,9 +282,9 @@ async fn decode_message_command(m: &ArgMatches<'_>, config: &Config) -> Result<(
             }
         }
     } else {
-        let base64_decode = base64::decode(input).map_err(|e| format!("{e}"));
-        let msg_decode = match base64_decode {
-            Ok(base64_decode) => decode_message(base64_decode, abi.clone()).await,
+        let base64_decoded = base64_decode(input).map_err(|e| format!("{e}"));
+        let msg_decode = match base64_decoded {
+            Ok(base64_decoded) => decode_message(base64_decoded, abi.clone()).await,
             Err(e) => Err(e),
         };
         match msg_decode {
@@ -292,7 +293,7 @@ async fn decode_message_command(m: &ArgMatches<'_>, config: &Config) -> Result<(
                 let ton_client = create_client(config)?;
                 let query_boc = query_message(ton_client, input).await
                     .map_err(|e2| format!("Failed to decode message, specify path to the file, message id or message in base64.\nBase64 error: {e}\nQuery error: {e2}"))?;
-                let message_bytes = base64::decode(&query_boc)
+                let message_bytes = base64_decode(&query_boc)
                     .map_err(|e2| format!("Failed to decode queried message: {e2}"))?;
                 decode_message(message_bytes, abi)
                     .await
@@ -362,7 +363,7 @@ async fn decode_body(
     is_json: bool,
     config: &Config,
 ) -> Result<(), String> {
-    let body_vec = base64::decode(body_base64)
+    let body_vec = base64_decode(body_base64)
         .map_err(|e| format!("body is not a valid base64 string: {}", e))?;
 
     let empty_boc = write_boc(&Cell::default())
@@ -492,6 +493,7 @@ pub mod msg_printer {
     use tvm_block::StateInit;
     use tvm_client::boc::get_compiler_version;
     use tvm_client::boc::ParamsOfGetCompilerVersion;
+    use tvm_types::base64_encode;
     use tvm_types::write_boc;
     use tvm_types::Cell;
 
@@ -505,7 +507,7 @@ pub mod msg_printer {
             Some(cell) => {
                 let bytes = write_boc(cell)
                     .map_err(|e| format!("failed to serialize tree of cells: {}", e))?;
-                Ok(base64::encode(&bytes))
+                Ok(base64_encode(&bytes))
             }
             None => Ok("".to_string()),
         }
@@ -618,7 +620,7 @@ pub mod msg_printer {
         if body_vec.cmp(&empty_boc) == std::cmp::Ordering::Equal {
             return Ok(json!("empty"));
         }
-        let body_base64 = base64::encode(&body_vec);
+        let body_base64 = base64_encode(&body_vec);
         let mut res = {
             match decode_msg_body(ton.clone(), abi_path, &body_base64, false, config).await {
                 Ok(res) => res,

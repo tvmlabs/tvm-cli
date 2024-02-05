@@ -1,3 +1,5 @@
+use tvm_types::base64_encode;
+
 // Copyright 2018-2021 TON DEV SOLUTIONS LTD.
 //
 // Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
@@ -22,7 +24,7 @@ pub async fn sendfile(config: &Config, msg_boc: &str) -> Result<(), String> {
     if !config.is_json {
         println!("Sending message to account {}", dst);
     }
-    send_message_and_wait(ton, None, base64::encode(&boc_vec), config).await?;
+    send_message_and_wait(ton, None, base64_encode(&boc_vec), config).await?;
     if !config.is_json {
         println!("Succeded.");
     }

@@ -18,6 +18,7 @@ use tvm_client::abi::CallSet;
 use tvm_client::abi::FunctionHeader;
 use tvm_client::abi::ParamsOfEncodeMessage;
 use tvm_client::abi::Signer;
+use tvm_types::base64_decode;
 
 use crate::config::Config;
 use crate::crypto::load_keypair;
@@ -105,7 +106,7 @@ pub fn print_encoded_message(msg: &EncodedMessage, is_json: bool) {
 
 pub fn pack_message(msg: &EncodedMessage, method: &str, is_raw: bool) -> Result<Vec<u8>, String> {
     let res = if is_raw {
-        base64::decode(&msg.message).map_err(|e| format!("failed to decode message: {}", e))?
+        base64_decode(&msg.message).map_err(|e| format!("failed to decode message: {}", e))?
     } else {
         let json_msg = json!({
             "msg": {

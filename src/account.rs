@@ -22,6 +22,7 @@ use tvm_client::net::ParamsOfSubscribeCollection;
 use tvm_client::net::ResultOfSubscription;
 use tvm_client::utils::calc_storage_fee;
 use tvm_client::utils::ParamsOfCalcStorageFee;
+use tvm_types::base64_decode;
 
 use crate::config::Config;
 use crate::decode::print_account_data;
@@ -158,7 +159,7 @@ pub async fn get_account(
                 let data = acc["data"].as_str();
                 let data_boc = if data.is_some() {
                     hex::encode(
-                        base64::decode(data.unwrap())
+                        base64_decode(data.unwrap())
                             .map_err(|e| format!("failed to decode account data: {}", e))?,
                     )
                 } else {

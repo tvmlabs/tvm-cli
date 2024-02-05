@@ -21,45 +21,45 @@ sold = ["dep:sold"]
 
 [dependencies]
 anyhow = "1.0.79"
-async-trait = "0.1.42"
-base64 = "0.13"
-chrono = "0.4"
-clap = "2.32"
-futures = "0.3"
-hex = "0.4"
-indicatif = "0.16"
-log = { features = ["std"], version = "0.4" }
-num-bigint = "0.4"
-num-traits = "0.2"
-qr2term = "0.2"
-regex = "1.5"
-reqwest = "0.11"
-serde = { features = ["derive"], version = "1.0" }
-serde_derive = "1.0"
-serde_json = "1.0"
-simplelog = "0.8"
+async-trait = "0.1.77"
+base64 = "0.21.7"
+chrono = "0.4.33"
+clap = "2"
+futures = "0.3.30"
+hex = "0.4.3"
+indicatif = "0.17.7"
+log = { features = ["std"], version = "0.4.20" }
+num-bigint = "0.4.4"
+num-traits = "0.2.17"
+qr2term = "0.3.1"
+regex = "1.10.3"
+reqwest = "0.11.24"
+serde = { features = ["derive"], version = "1.0.196" }
+serde_derive = "1.0.196"
+serde_json = "1.0.113"
+simplelog = "0.12.1"
 thiserror = "1.0.56"
-tokio = { default-features = false, features = ["full"], version = "1.21" }
-tokio-retry = "0.3"
-url = "2.3.1"
+tokio = { default-features = false, features = ["full"], version = "1.36.0" }
+tokio-retry = "0.3.0"
+url = "2.5.0"
 
 sold = { git = "https://github.com/tvmlabs/tvm-solidity-compiler", tag = "0.73.0", optional = true }
 tvm_abi = { git = "https://github.com/tvmlabs/tvm-abi", tag = "3.0.0" }
 tvm_block = { git = "https://github.com/tvmlabs/tvm-block", tag = "2.0.0" }
 tvm_block_json = { git = "https://github.com/tvmlabs/tvm-block-json", tag = "0.8.0" }
 # tvm_client = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "feature/masterchain-free" }
+tvm_assembler = { git = "https://github.com/tvmlabs/tvm-assembler", tag = "2.0.0" }
 tvm_client = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "rc-1.46.0" }
 tvm_executor = { git = "https://github.com/tvmlabs/tvm-executor", tag = "2.0.0" }
-tvm_assembler = { git = "https://github.com/tvmlabs/tvm-assembler", tag = "2.0.0" }
 # tvm_sdk = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "feature/masterchain-free" }
 tvm_sdk = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "rc-1.46.0" }
 tvm_types = { git = "https://github.com/tvmlabs/tvm-types", tag = "3.0.1" }
 tvm_vm = { git = "https://github.com/tvmlabs/tvm-vm", tag = "2.0.0" }
 
 [dev-dependencies]
-assert_cmd = "2.0"
-lazy_static = "1.4"
-predicates = "2.1"
+assert_cmd = "2.0.13"
+lazy_static = "1.4.0"
+predicates = "3.1.0"
 string-error = "0.1.0"
 
 [[bin]]

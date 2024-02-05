@@ -30,6 +30,7 @@ use tvm_client::processing::ProcessingEvent;
 use tvm_client::tvm::run_executor;
 use tvm_client::tvm::AccountForExecutor;
 use tvm_client::tvm::ParamsOfRunExecutor;
+use tvm_types::base64_encode;
 
 use crate::config::Config;
 use crate::convert;
@@ -132,7 +133,7 @@ pub async fn emulate_locally(
         if is_fee {
             let addr = tvm_block::MsgAddressInt::from_str(addr)
                 .map_err(|e| format!("couldn't decode address: {}", e))?;
-            state = base64::encode(
+            state = base64_encode(
                 &tvm_types::write_boc(&Account::with_address(addr).serialize().map_err(|e| {
                     format!("couldn't create dummy account for deploy emulation: {}", e)
                 })?)

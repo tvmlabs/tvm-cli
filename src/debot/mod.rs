@@ -95,7 +95,12 @@ pub async fn debot_command(m: &ArgMatches<'_>, config: Config) -> Result<(), Str
     }
 
     if debug {
-        loggers.push(TermLogger::new(LevelFilter::Debug, log_conf.clone(), TerminalMode::Mixed));
+        loggers.push(TermLogger::new(
+            LevelFilter::Debug,
+            log_conf.clone(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ));
     }
     CombinedLogger::init(loggers).unwrap();
 

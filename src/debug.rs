@@ -52,6 +52,7 @@ use tvm_executor::ExecuteParams;
 use tvm_executor::OrdinaryTransactionExecutor;
 use tvm_executor::TickTockTransactionExecutor;
 use tvm_executor::TransactionExecutor;
+use tvm_types::base64_encode;
 use tvm_types::AccountId;
 use tvm_types::Cell;
 use tvm_types::UInt256;
@@ -1052,7 +1053,7 @@ pub async fn decode_messages(
         ser_msg["id"] = msg_cell.repr_hash().as_hex_string().into();
         let msg_bytes = tvm_types::write_boc(&msg_cell)
             .map_err(|e| format!("failed to encode out message: {e}"))?;
-        ser_msg["Message_base64"] = base64::encode(msg_bytes).into();
+        ser_msg["Message_base64"] = base64_encode(msg_bytes).into();
         let body = &ser_msg["BodyCall"];
         if body.is_object() {
             res.push(body.clone());
@@ -1073,7 +1074,7 @@ pub async fn decode_messages(
         //     Err(err) => err.to_string().into()
         // };
         // let _in_msg = match tr.read_in_msg() {
-        //     Ok(Some(in_msg)) => base64::encode(in_msg.write_to_bytes().unwrap()),
+        //     Ok(Some(in_msg)) => base64_encode(in_msg.write_to_bytes().unwrap()),
         //     _ => String::new()
         // };
         let result = json!({

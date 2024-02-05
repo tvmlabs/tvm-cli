@@ -16,6 +16,7 @@ use tvm_client::abi::FunctionHeader;
 use tvm_client::abi::ParamsOfEncodeMessage;
 use tvm_client::abi::Signer;
 use tvm_client::crypto::KeyPair;
+use tvm_types::base64_encode;
 
 use crate::call::emulate_locally;
 use crate::call::process_message;
@@ -150,7 +151,7 @@ pub async fn prepare_deploy_message_params(
     keys: Option<KeyPair>,
     wc: i32,
 ) -> Result<(ParamsOfEncodeMessage, String), String> {
-    let tvc = base64::encode(&tvc_bytes);
+    let tvc = base64_encode(&tvc_bytes);
 
     let data_map_supported = abi.abi().unwrap().data_map_supported();
     let address = if data_map_supported {

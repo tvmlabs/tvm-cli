@@ -43,6 +43,8 @@ use tvm_client::net::ParamsOfQueryCollection;
 use tvm_client::ClientConfig;
 use tvm_client::ClientContext;
 use tvm_executor::BlockchainConfig;
+use tvm_types::base64_decode;
+use tvm_types::base64_encode;
 use url::Url;
 
 use crate::call::parse_params;
@@ -382,7 +384,7 @@ pub async fn calc_acc_address(
             .map_err(|e| format!("initial data is not in json: {}", e))?;
 
         DeploySet {
-            tvc: Some(base64::encode(tvc)),
+            tvc: Some(base64_encode(tvc)),
             workchain_id: Some(wc),
             initial_data: init_data_json,
             initial_pubkey: pubkey.clone(),
@@ -393,7 +395,7 @@ pub async fn calc_acc_address(
         let js = serde_json::from_str(init_data_json.as_str())
             .map_err(|e| format!("initial data is not in json: {}", e))?;
         DeploySet {
-            tvc: Some(base64::encode(tvc)),
+            tvc: Some(base64_encode(tvc)),
             workchain_id: Some(wc),
             initial_data: js,
             initial_pubkey: None, // initial_pubkey: pubkey.clone(),
@@ -643,7 +645,7 @@ pub async fn load_account(
             let account_bytes = account
                 .write_to_bytes()
                 .map_err(|e| format!(" failed to load data from the account: {}", e))?;
-            Ok((account, base64::encode(&account_bytes)))
+            Ok((account, base64_encode(&account_bytes)))
         }
     }
 }
@@ -1055,7 +1057,7 @@ pub async fn get_blockchain_config(
 }
 
 pub fn decode_data(data: &str, param_name: &str) -> Result<Vec<u8>, String> {
-    if let Ok(data) = base64::decode(data) {
+    if let Ok(data) = base64_decode(data) {
         Ok(data)
     } else if let Ok(data) = hex::decode(data) {
         Ok(data)

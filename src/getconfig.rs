@@ -26,6 +26,7 @@ use tvm_client::boc::get_blockchain_config;
 use tvm_client::boc::ParamsOfGetBlockchainConfig;
 use tvm_client::net::OrderBy;
 use tvm_client::net::SortDirection;
+use tvm_types::base64_decode;
 use tvm_types::ed25519_create_private_key;
 use tvm_types::ed25519_sign_with_secret;
 use tvm_types::BuilderData;
@@ -553,8 +554,8 @@ pub async fn dump_blockchain_config(config: &Config, path: &str) -> Result<(), S
     )
     .map_err(|e| format!("Failed to get blockchain config: {}", e))?;
 
-    let bc_config = base64::decode(&bc_config.config_boc)
-        .map_err(|e| format!("Failed to decode BOC: {}", e))?;
+    let bc_config =
+        base64_decode(&bc_config.config_boc).map_err(|e| format!("Failed to decode BOC: {}", e))?;
     std::fs::write(path, bc_config)
         .map_err(|e| format!("Failed to write data to the file {}: {}", path, e))?;
     if !config.is_json {

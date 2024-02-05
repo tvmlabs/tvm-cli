@@ -45,6 +45,7 @@ use tvm_executor::ExecuteParams;
 use tvm_executor::OrdinaryTransactionExecutor;
 use tvm_executor::TickTockTransactionExecutor;
 use tvm_executor::TransactionExecutor;
+use tvm_types::base64_encode;
 use tvm_types::write_boc;
 use tvm_types::BuilderData;
 use tvm_types::SliceData;
@@ -184,7 +185,7 @@ pub async fn fetch(
         let data = format!(
             "{{\"id\":\"{}\",\"boc\":\"{}\"}}\n",
             account_address,
-            base64::encode(
+            base64_encode(
                 &Account::default()
                     .write_to_bytes()
                     .map_err(|e| format!("failed to serialize account: {}", e))?
@@ -583,7 +584,7 @@ pub async fn fetch_block(config: &Config, block_id: &str, filename: &str) -> tvm
         account_block.transaction_iterate(|tr| {
             let cell = tr.serialize()?;
             let bytes = write_boc(&cell)?;
-            txns.push((cell.repr_hash().to_hex_string(), base64::encode(&bytes)));
+            txns.push((cell.repr_hash().to_hex_string(), base64_encode(&bytes)));
             Ok(true)
         })?;
         accounts.push((account_name, txns));
@@ -668,7 +669,7 @@ pub async fn fetch_block(config: &Config, block_id: &str, filename: &str) -> tvm
 
     let mut block = BlockDescr {
         id: block_id.to_string(),
-        config_boc: base64::encode(&config_data),
+        config_boc: base64_encode(&config_data),
         accounts: vec![],
     };
 
@@ -683,7 +684,7 @@ pub async fn fetch_block(config: &Config, block_id: &str, filename: &str) -> tvm
         }
         block
             .accounts
-            .push(BlockAccountDescr { account_boc: base64::encode(&account_data), transactions });
+            .push(BlockAccountDescr { account_boc: base64_encode(&account_data), transactions });
     }
 
     let writer = std::io::BufWriter::new(File::create(filename)?);

@@ -21,6 +21,7 @@ use tvm_client::tvm::run_tvm;
 use tvm_client::tvm::ExecutionOptions;
 use tvm_client::tvm::ParamsOfRunGet;
 use tvm_client::tvm::ParamsOfRunTvm;
+use tvm_types::base64_encode;
 
 use crate::call::print_json_result;
 use crate::config::Config;
@@ -221,7 +222,7 @@ fn prepare_execution_options(bc_config: Option<&str>) -> Result<Option<Execution
                 .write_to_bytes()
                 .map_err(|e| format!("Failed to serialize config params: {e}"))?;
         }
-        let blockchain_config = Some(base64::encode(bytes));
+        let blockchain_config = Some(base64_encode(bytes));
         let ex_opt = ExecutionOptions { blockchain_config, ..Default::default() };
         return Ok(Some(ex_opt));
     }

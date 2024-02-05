@@ -31,6 +31,7 @@ use tvm_client::abi::FunctionHeader;
 use tvm_client::abi::ParamsOfEncodeInternalMessage;
 use tvm_client::abi::ParamsOfEncodeMessage;
 use tvm_client::abi::Signer as AbiSigner;
+use tvm_types::base64_encode;
 use tvm_types::ed25519_sign_with_secret;
 use tvm_types::read_single_root_boc;
 use tvm_types::write_boc;
@@ -253,7 +254,7 @@ async fn test_deploy(matches: &ArgMatches<'_>, config: &Config) -> Result<(), St
         None => (AbiSigner::None, None),
     };
     let deploy_set = Some(DeploySet {
-        tvc: Some(base64::encode(&tvc_bytes)),
+        tvc: Some(base64_encode(&tvc_bytes)),
         workchain_id,
         initial_pubkey,
         ..Default::default()
@@ -410,7 +411,7 @@ pub fn test_sign_command(matches: &ArgMatches<'_>, config: &Config) -> Result<()
     let key = pair.decode().map_err(|err| format!("cannot decode keypair {}", err))?;
     let signature = ed25519_sign_with_secret(&key.to_bytes(), &data)
         .map_err(|e| format!("Failed to sign: {e}"))?;
-    let signature = base64::encode(signature.as_ref());
+    let signature = base64_encode(signature.as_ref());
     if config.is_json {
         let result = json!({
             "Data": hex::encode(data),
@@ -430,7 +431,7 @@ pub fn test_config_command(matches: &ArgMatches<'_>, config: &Config) -> Result<
         let (cell, index) = serialize_config_param(&load_params(encode)?)?;
         let result = write_boc(&cell);
         let cell = match result {
-            Ok(config_bytes) => base64::encode(config_bytes),
+            Ok(config_bytes) => base64_encode(config_bytes),
             Err(e) => return Err(format!("Failed to serialize json {encode}: {e}")),
         };
         if config.is_json {
