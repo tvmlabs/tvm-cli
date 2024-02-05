@@ -169,13 +169,33 @@ checksum = "080e9890a082662b09c1ad45f567faeeb47f22b5fb23895fbe1e651e718e25ca"
 [[package]]
 name = "api_derive"
 version = "1.46.0"
-source = "git+https://github.com/tvmlabs/tvm-sdk?branch=rc-1.46.0#c56d2703bfb3df07b70568ec1adc7316a332e80a"
 dependencies = [
- "api_info",
+ "api_info 1.46.0",
  "proc-macro2",
  "quote",
  "serde_json",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "api_derive"
+version = "1.46.0"
+source = "git+https://github.com/tvmlabs/tvm-sdk?branch=rc-1.46.0#c56d2703bfb3df07b70568ec1adc7316a332e80a"
+dependencies = [
+ "api_info 1.46.0 (git+https://github.com/tvmlabs/tvm-sdk?branch=rc-1.46.0)",
+ "proc-macro2",
+ "quote",
+ "serde_json",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "api_info"
+version = "1.46.0"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "serde_json",
 ]
 
 [[package]]
@@ -2747,7 +2767,7 @@ dependencies = [
  "tvm_block_json",
  "tvm_client",
  "tvm_executor",
- "tvm_sdk",
+ "tvm_sdk 1.46.0 (git+https://github.com/tvmlabs/tvm-sdk?branch=rc-1.46.0)",
  "tvm_types",
  "tvm_vm",
  "url",
@@ -2857,12 +2877,11 @@ dependencies = [
 [[package]]
 name = "tvm_client"
 version = "1.46.0"
-source = "git+https://github.com/tvmlabs/tvm-sdk?branch=rc-1.46.0#c56d2703bfb3df07b70568ec1adc7316a332e80a"
 dependencies = [
  "aes",
  "anyhow",
- "api_derive",
- "api_info",
+ "api_derive 1.46.0",
+ "api_info 1.46.0",
  "async-trait",
  "base58",
  "base64 0.21.7",
@@ -2906,7 +2925,7 @@ dependencies = [
  "tvm_block_json",
  "tvm_client_processing",
  "tvm_executor",
- "tvm_sdk",
+ "tvm_sdk 1.46.0",
  "tvm_struct",
  "tvm_types",
  "tvm_vm",
@@ -2917,10 +2936,9 @@ dependencies = [
 [[package]]
 name = "tvm_client_processing"
 version = "1.46.0"
-source = "git+https://github.com/tvmlabs/tvm-sdk?branch=rc-1.46.0#c56d2703bfb3df07b70568ec1adc7316a332e80a"
 dependencies = [
- "api_derive",
- "api_info",
+ "api_derive 1.46.0",
+ "api_info 1.46.0",
  "async-trait",
  "base64 0.21.7",
  "futures",
@@ -2951,11 +2969,35 @@ dependencies = [
 [[package]]
 name = "tvm_sdk"
 version = "1.46.0"
+dependencies = [
+ "anyhow",
+ "api_derive 1.46.0",
+ "api_info 1.46.0",
+ "base64 0.21.7",
+ "chrono",
+ "hex",
+ "lazy_static",
+ "log",
+ "num-bigint",
+ "num-traits",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha2 0.10.8",
+ "thiserror",
+ "tvm_abi",
+ "tvm_block",
+ "tvm_types",
+]
+
+[[package]]
+name = "tvm_sdk"
+version = "1.46.0"
 source = "git+https://github.com/tvmlabs/tvm-sdk?branch=rc-1.46.0#c56d2703bfb3df07b70568ec1adc7316a332e80a"
 dependencies = [
  "anyhow",
- "api_derive",
- "api_info",
+ "api_derive 1.46.0 (git+https://github.com/tvmlabs/tvm-sdk?branch=rc-1.46.0)",
+ "api_info 1.46.0 (git+https://github.com/tvmlabs/tvm-sdk?branch=rc-1.46.0)",
  "base64 0.21.7",
  "chrono",
  "hex",
@@ -3490,3 +3532,7 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "tvm_cli"
+version = "1.46.0"
