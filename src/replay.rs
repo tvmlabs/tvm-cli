@@ -73,8 +73,11 @@ pub fn construct_blockchain_config(config_account: &Account) -> Result<Blockchai
 fn construct_blockchain_config_err(
     config_account: &Account,
 ) -> tvm_types::Result<BlockchainConfig> {
-    let config_cell =
-        config_account.get_data().ok_or(anyhow::anyhow!("Failed to get account's data"))?.reference(0).ok();
+    let config_cell = config_account
+        .get_data()
+        .ok_or(anyhow::anyhow!("Failed to get account's data"))?
+        .reference(0)
+        .ok();
     let config_params =
         ConfigParams::with_address_and_params(UInt256::with_array([0x55; 32]), config_cell);
     BlockchainConfig::with_config(config_params)
@@ -538,8 +541,8 @@ pub async fn replay(
 }
 
 pub async fn fetch_block(config: &Config, block_id: &str, filename: &str) -> tvm_types::Status {
-    let context =
-        create_client(config).map_err(|e| anyhow::anyhow!(format!("Failed to create ctx: {}", e)))?;
+    let context = create_client(config)
+        .map_err(|e| anyhow::anyhow!(format!("Failed to create ctx: {}", e)))?;
 
     let block = query_collection(
         context.clone(),

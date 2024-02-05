@@ -63,9 +63,9 @@ predicates = "2.1"
 string-error = "0.1.0"
 
 [[bin]]
-name = "tonos-cli"
+name = "tvm-cli"
 path = "src/main.rs"
 
 [[bin]]
-name = "__tonos-cli_completion"
+name = "__tvm-cli_completion"
 path = "src/completion.rs"

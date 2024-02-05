@@ -6,7 +6,7 @@ use predicates::prelude::*;
 use serde_json::Map;
 use serde_json::Value;
 
-pub const BIN_NAME: &str = "tonos-cli";
+pub const BIN_NAME: &str = "tvm-cli";
 pub const GIVER_ADDR: &str = "0:841288ed3b55d9cdafa806807f02a0ae0c169aa5edfe88a789a6482429756a94";
 pub const GIVER_ABI: &str = "tests/samples/giver.abi.json";
 pub const GIVER_V2_ADDR: &str =
