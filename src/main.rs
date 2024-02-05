@@ -15,8 +15,6 @@
 
 mod account;
 mod call;
-#[cfg(feature = "sold")]
-mod compile;
 mod config;
 mod convert;
 mod crypto;
@@ -93,10 +91,6 @@ use voting::decode_proposal;
 use voting::vote;
 
 use crate::account::dump_accounts;
-#[cfg(feature = "sold")]
-use crate::compile::compile_command;
-#[cfg(feature = "sold")]
-use crate::compile::create_compile_command;
 use crate::config::resolve_net_name;
 use crate::config::FullConfig;
 use crate::getconfig::gen_update_config_message;
@@ -993,8 +987,6 @@ async fn main_internal() -> Result<(), String> {
         .subcommand(runx_cmd)
         .subcommand(update_config_param_cmd)
         .setting(AppSettings::SubcommandRequired);
-    #[cfg(feature = "sold")]
-    let matches = matches.subcommand(create_compile_command());
 
     let matches = matches.get_matches_safe().map_err(|e| match e.kind {
         clap::ErrorKind::VersionDisplayed => {
@@ -1174,10 +1166,7 @@ async fn command_parser(matches: &ArgMatches<'_>, is_json: bool) -> Result<(), S
     if let Some(m) = matches.subcommand_matches("test") {
         return test_command(m, &full_config).await;
     }
-    #[cfg(feature = "sold")]
-    if let Some(m) = matches.subcommand_matches("compile") {
-        return compile_command(m, &config).await;
-    }
+
     if matches.subcommand_matches("version").is_some() {
         if config.is_json {
             println!("{{");
