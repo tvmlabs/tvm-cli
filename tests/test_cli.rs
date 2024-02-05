@@ -2778,7 +2778,7 @@ fn test_alternative_paths() -> Result<(), Box<dyn std::error::Error>> {
         ));
     cmd.assert().success();
 
-    set_config(&["--abi"], &[&*SAFEMSIG_ABI_LINK], Some(config_path))?;
+    set_config(&["--abi"], &[SAFEMSIG_ABI_LINK], Some(config_path))?;
 
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
     cmd.arg("--config")
