@@ -1,12 +1,20 @@
-use ton_client::abi::Abi;
-use crate::debot::{ChainProcessor, ProcessorError};
-use ton_client::debot::{DebotInterface, InterfaceResult};
-use std::sync::{Arc};
+use std::sync::Arc;
+
+use serde_json::json;
+use serde_json::Value;
 use tokio::sync::RwLock;
-use serde_json::{Value, json};
-use super::dinterface::{decode_answer_id, decode_prompt, decode_string_arg};
-use super::menu::{MenuItem, ID as MENU_ID};
+use ton_client::abi::Abi;
+use ton_client::debot::DebotInterface;
+use ton_client::debot::InterfaceResult;
+
+use super::dinterface::decode_answer_id;
+use super::dinterface::decode_prompt;
+use super::dinterface::decode_string_arg;
+use super::menu::MenuItem;
+use super::menu::ID as MENU_ID;
 use super::terminal::ID as TERMINAL_ID;
+use crate::debot::ChainProcessor;
+use crate::debot::ProcessorError;
 
 pub struct InputInterface {
     processor: Arc<RwLock<ChainProcessor>>,
@@ -18,10 +26,7 @@ impl InputInterface {
         inner_interface: Arc<dyn DebotInterface + Send + Sync>,
         processor: Arc<RwLock<ChainProcessor>>,
     ) -> Self {
-        Self {
-            inner_interface,
-            processor,
-        }
+        Self { inner_interface, processor }
     }
 }
 
@@ -44,7 +49,7 @@ impl DebotInterface for InputInterface {
             Err(ProcessorError::InterfaceCallNeeded) => {
                 let res = self.inner_interface.call(func, args).await?;
                 Ok(res)
-            },
+            }
             Err(e) => return Err(format!("{:?}", e)),
             Ok(params) => {
                 let prompt = decode_prompt(args);
@@ -63,10 +68,11 @@ impl DebotInterface for InputInterface {
                     }
                 }
                 let answer_id = if self.get_id() == MENU_ID {
-                    let n = params["index"].as_u64()
+                    let n = params["index"]
+                        .as_u64()
                         .ok_or("invalid arguments for menu callback".to_string())?;
-                    let menu_items: Vec<MenuItem> = serde_json::from_value(args["items"].clone())
-                        .map_err(|e| e.to_string())?;
+                    let menu_items: Vec<MenuItem> =
+                        serde_json::from_value(args["items"].clone()).map_err(|e| e.to_string())?;
                     let menu = menu_items.get(n as usize);
                     menu.ok_or("menu index is out of range".to_string())?.handler_id
                 } else {

@@ -1,35 +1,58 @@
-/*
- * Copyright 2023-2023 EverX.
- *
- * Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
- * this file except in compliance with the License.
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific TON DEV software governing permissions and
- * limitations under the License.
- */
+// Copyright 2023-2023 EverX.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
+
+use std::path::PathBuf;
+
+use clap::App;
+use clap::Arg;
+use clap::ArgMatches;
+use clap::SubCommand;
+use serde_json::json;
+use ton_block::Account;
+use ton_block::ConfigParams;
+use ton_block::CurrencyCollection;
+use ton_block::Deserializable;
+use ton_block::Message;
+use ton_block::Serializable;
+use ton_block::TickTock;
+use ton_client::abi::encode_internal_message;
+use ton_client::abi::encode_message;
+use ton_client::abi::CallSet;
+use ton_client::abi::DeploySet;
+use ton_client::abi::FunctionHeader;
+use ton_client::abi::ParamsOfEncodeInternalMessage;
+use ton_client::abi::ParamsOfEncodeMessage;
+use ton_client::abi::Signer as AbiSigner;
+use ton_types::ed25519_sign_with_secret;
+use ton_types::read_single_root_boc;
+use ton_types::write_boc;
+use ton_types::BuilderData;
+use ton_types::SliceData;
 
 use crate::config::Config;
-use crate::crypto::{self, load_keypair};
-use crate::debug::{decode_messages, execute_debug, init_debug_logger, DEFAULT_TRACE_PATH};
+use crate::crypto::load_keypair;
+use crate::crypto::{self};
+use crate::debug::decode_messages;
+use crate::debug::execute_debug;
+use crate::debug::init_debug_logger;
+use crate::debug::DEFAULT_TRACE_PATH;
 use crate::getconfig::serialize_config_param;
-use crate::helpers::{
-    create_client_local, decode_data, get_blockchain_config, load_abi, now_ms, unpack_alternative_params, load_params,
-};
+use crate::helpers::create_client_local;
+use crate::helpers::decode_data;
+use crate::helpers::get_blockchain_config;
+use crate::helpers::load_abi;
+use crate::helpers::load_params;
+use crate::helpers::now_ms;
+use crate::helpers::unpack_alternative_params;
 use crate::FullConfig;
-use clap::{App, Arg, ArgMatches, SubCommand};
-use serde_json::json;
-use std::path::PathBuf;
-use ton_block::{
-    Account, ConfigParams, CurrencyCollection, Deserializable, Message, Serializable, TickTock,
-};
-use ton_client::abi::{
-    encode_internal_message, encode_message, CallSet, DeploySet, FunctionHeader,
-    ParamsOfEncodeInternalMessage, ParamsOfEncodeMessage, Signer as AbiSigner,
-};
-use ton_types::{read_single_root_boc, write_boc, SliceData, BuilderData, ed25519_sign_with_secret};
 
 pub fn create_test_sign_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("sign")
@@ -153,11 +176,7 @@ pub fn create_test_command<'a, 'b>() -> App<'a, 'b> {
         .arg(full_trace_arg.clone())
         .arg(now_arg.clone())
         .arg(config_boc_arg.clone())
-        .arg(
-            Arg::with_name("IS_TOCK")
-                .long("--tock")
-                .help("make tock transaction."),
-        );
+        .arg(Arg::with_name("IS_TOCK").long("--tock").help("make tock transaction."));
 
     let config_cmd = SubCommand::with_name("config")
         .about("Encode or decode config params")
@@ -220,10 +239,7 @@ async fn test_deploy(matches: &ArgMatches<'_>, config: &Config) -> Result<(), St
     let address_opt = matches.value_of("ACCOUNT_ADDRESS");
     let balance = matches.value_of("INITIAL_BALANCE").unwrap();
     let workchain_id = matches.value_of("WC").and_then(|wc| wc.parse().ok());
-    let now = matches
-        .value_of("NOW")
-        .and_then(|now| now.parse().ok())
-        .unwrap_or(now_ms());
+    let now = matches.value_of("NOW").and_then(|now| now.parse().ok()).unwrap_or(now_ms());
     let trace_path = matches.value_of("LOG_PATH").unwrap_or(DEFAULT_TRACE_PATH);
 
     let tvc_bytes =
@@ -244,27 +260,15 @@ async fn test_deploy(matches: &ArgMatches<'_>, config: &Config) -> Result<(), St
     });
     let params = serde_json::from_str(&load_params(&params)?)
         .map_err(|e| format!("function arguments is not a json: {}", e))?;
-    let header = Some(FunctionHeader {
-        time: Some(now),
-        ..Default::default()
-    });
-    let call_set = Some(CallSet {
-        function_name,
-        input: Some(params),
-        header,
-        ..Default::default()
-    });
+    let header = Some(FunctionHeader { time: Some(now), ..Default::default() });
+    let call_set =
+        Some(CallSet { function_name, input: Some(params), header, ..Default::default() });
     let mut account;
     let mut message;
     let is_external = matches.is_present("EXTERNAL");
     if is_external {
-        let msg_params = ParamsOfEncodeMessage {
-            abi,
-            deploy_set,
-            call_set,
-            signer,
-            ..Default::default()
-        };
+        let msg_params =
+            ParamsOfEncodeMessage { abi, deploy_set, call_set, signer, ..Default::default() };
         let enc_msg = encode_message(context.clone(), msg_params)
             .await
             .map_err(|e| format!("Failed to create deploy message: {e}"))?;
@@ -273,8 +277,8 @@ async fn test_deploy(matches: &ArgMatches<'_>, config: &Config) -> Result<(), St
             .address
             .parse()
             .map_err(|e| format!("Failed to set address {}: {e}", enc_msg.address))?;
-        let balance = balance.parse()
-            .map_err(|e| format!("Failed to parse initial balance: {e}"))?;
+        let balance =
+            balance.parse().map_err(|e| format!("Failed to parse initial balance: {e}"))?;
 
         let balance = CurrencyCollection::with_grams(balance);
         account = Account::with_address_and_ballance(addr, &balance);
@@ -293,8 +297,8 @@ async fn test_deploy(matches: &ArgMatches<'_>, config: &Config) -> Result<(), St
             .map_err(|e| format!("Failed to create deploy internal message: {e}"))?;
         message = Message::construct_from_base64(&enc_msg.message).unwrap();
         if let Some(header) = message.int_header_mut() {
-            header.value.grams = balance.parse()
-               .map_err(|e| format!("Failed to parse initial balance: {e}"))?;
+            header.value.grams =
+                balance.parse().map_err(|e| format!("Failed to parse initial balance: {e}"))?;
         }
         account = Account::default();
     }
@@ -319,9 +323,8 @@ async fn test_deploy(matches: &ArgMatches<'_>, config: &Config) -> Result<(), St
     account = Account::construct_from_cell(account_root)
         .map_err(|e| format!("Failed to construct resulting account: {e}"))?;
     if let Some(address) = address_opt {
-        let addr = address
-            .parse()
-            .map_err(|e| format!("Failed to parse address {address}: {e}"))?;
+        let addr =
+            address.parse().map_err(|e| format!("Failed to parse address {address}: {e}"))?;
         account.set_addr(addr);
     }
     let output = PathBuf::from(input).with_extension("boc");
@@ -337,10 +340,7 @@ async fn test_deploy(matches: &ArgMatches<'_>, config: &Config) -> Result<(), St
 async fn test_ticktock(matches: &ArgMatches<'_>, config: &Config) -> Result<(), String> {
     let input = matches.value_of("PATH").unwrap();
     let bc_config = matches.value_of("CONFIG_BOC");
-    let now = matches
-        .value_of("NOW")
-        .and_then(|now| now.parse().ok())
-        .unwrap_or(now_ms());
+    let now = matches.value_of("NOW").and_then(|now| now.parse().ok()).unwrap_or(now_ms());
     let trace_path = matches.value_of("LOG_PATH").unwrap_or(DEFAULT_TRACE_PATH);
     let is_tock = matches.is_present("IS_TOCK");
 
@@ -377,9 +377,7 @@ async fn test_ticktock(matches: &ArgMatches<'_>, config: &Config) -> Result<(), 
     }
     let account = Account::construct_from_cell(account_root)
         .map_err(|e| format!("Failed to construct Account after transaction: {e}"))?;
-    account
-        .write_to_file(&input)
-        .map_err(|e| format!("Failed write to file {:?}: {e}", input))?;
+    account.write_to_file(&input).map_err(|e| format!("Failed write to file {:?}: {e}", input))?;
     if !config.is_json {
         println!("Account written to {:?}", input);
     }
@@ -409,9 +407,7 @@ pub fn test_sign_command(matches: &ArgMatches<'_>, config: &Config) -> Result<()
             None => return Err("nor signing keys in the params neither in the config".to_string()),
         },
     };
-    let key = pair
-        .decode()
-        .map_err(|err| format!("cannot decode keypair {}", err))?;
+    let key = pair.decode().map_err(|err| format!("cannot decode keypair {}", err))?;
     let signature = ed25519_sign_with_secret(&key.to_bytes(), &data)
         .map_err(|e| format!("Failed to sign: {e}"))?;
     let signature = base64::encode(signature.as_ref());
@@ -447,9 +443,8 @@ pub fn test_config_command(matches: &ArgMatches<'_>, config: &Config) -> Result<
         let cell = read_single_root_boc(bytes)
             .map_err(|e| format!("Failed to deserialize tree of cells {e}"))?;
         let result = if let Some(index) = matches.value_of("INDEX") {
-            let index = index
-                .parse::<u32>()
-                .map_err(|e| format!("Failed to parse index {index}: {e}"))?;
+            let index =
+                index.parse::<u32>().map_err(|e| format!("Failed to parse index {index}: {e}"))?;
             let mut params = ConfigParams::default();
             let key = SliceData::load_builder(index.write_to_new_cell().unwrap()).unwrap();
             let value = BuilderData::with_raw_and_refs(vec![], 0, [cell]).unwrap();

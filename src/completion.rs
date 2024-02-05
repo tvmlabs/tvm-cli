@@ -1,22 +1,22 @@
-/*
- * Copyright 2018-2021 TON DEV SOLUTIONS LTD.
- *
- * Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
- * this file except in compliance with the License.
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific TON DEV software governing permissions and
- * limitations under the License.
- */
+// Copyright 2018-2021 TON DEV SOLUTIONS LTD.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
 extern crate core;
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
-use ton_client::abi::{AbiContract};
+
+use serde::Deserialize;
+use serde::Serialize;
+use ton_client::abi::AbiContract;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ContractData {
@@ -62,11 +62,7 @@ pub struct Config {
 const CONFIG_BASE_NAME: &str = "tonos-cli.conf.json";
 
 fn print_paths(prefix: &str) {
-    let folder = if !prefix.contains('/') {
-        "./"
-    } else {
-        prefix.trim_end_matches(|c| c != '/')
-    };
+    let folder = if !prefix.contains('/') { "./" } else { prefix.trim_end_matches(|c| c != '/') };
     let paths = std::fs::read_dir(folder);
     if paths.is_err() {
         return;
@@ -88,13 +84,13 @@ fn print_paths(prefix: &str) {
         }
     } else {
         for path in saved_path {
-            println!("{}{}", path.to_str().unwrap(), if path.is_dir() {"/"} else {""});
+            println!("{}{}", path.to_str().unwrap(), if path.is_dir() { "/" } else { "" });
         }
     }
 }
 
 fn main() {
-    let args : Vec<String> = std::env::args().collect();
+    let args: Vec<String> = std::env::args().collect();
     let word_being_completed = &args[2];
     let prev_word = args.last().unwrap();
 
@@ -103,17 +99,17 @@ fn main() {
         print_paths(word_being_completed);
         return;
     }
-    let words = cmd_line.unwrap().split(' ').map(|s| s.to_string())
-        .collect::<Vec<String>>();
+    let words = cmd_line.unwrap().split(' ').map(|s| s.to_string()).collect::<Vec<String>>();
     let mut options_map = BTreeMap::new();
     for (index, word) in words.iter().enumerate() {
         if word.starts_with('-') && index != words.len() - 1 {
             options_map.insert(word.as_str(), words[index + 1].as_str());
         }
     }
-    let config_path = options_map.get(&"-c")
-        .or(options_map.get(&"--config")
-            .or(Some(&CONFIG_BASE_NAME))).unwrap();
+    let config_path = options_map
+        .get(&"-c")
+        .or(options_map.get(&"--config").or(Some(&CONFIG_BASE_NAME)))
+        .unwrap();
     let conf_str = std::fs::read_to_string(config_path).ok().unwrap_or_default();
     let config: serde_json::Result<FullConfig> = serde_json::from_str(&conf_str);
     if config.is_err() {
@@ -140,13 +136,20 @@ fn main() {
         let abi_path = match options_map.get(&"--abi") {
             Some(path) => Some(path.to_string()),
             None => {
-                if (options_map.contains_key("--addr")) && aliases.contains_key(&options_map.get("--addr").unwrap().to_string()) {
-                    aliases.get(&options_map.get("--addr").unwrap().to_string()).unwrap().clone().abi_path
+                if (options_map.contains_key("--addr"))
+                    && aliases.contains_key(&options_map.get("--addr").unwrap().to_string())
+                {
+                    aliases
+                        .get(&options_map.get("--addr").unwrap().to_string())
+                        .unwrap()
+                        .clone()
+                        .abi_path
                 } else {
                     None
                 }
             }
-        }.or(config.config.abi_path);
+        }
+        .or(config.config.abi_path);
         if abi_path.is_none() {
             return;
         }

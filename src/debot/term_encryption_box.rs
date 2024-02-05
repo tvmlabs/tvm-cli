@@ -1,12 +1,20 @@
+use std::io::{self};
+
+use ton_client::crypto::register_encryption_box;
+use ton_client::crypto::remove_encryption_box;
+use ton_client::crypto::ChaCha20EncryptionBox;
+use ton_client::crypto::ChaCha20ParamsEB;
+use ton_client::crypto::EncryptionBoxHandle;
+use ton_client::crypto::NaclBoxParamsEB;
+use ton_client::crypto::NaclEncryptionBox;
+use ton_client::crypto::NaclSecretBoxParamsEB;
+use ton_client::crypto::NaclSecretEncryptionBox;
+use ton_client::crypto::RegisteredEncryptionBox;
+
 use super::term_browser::input;
 use crate::crypto::load_keypair;
-use crate::helpers::{TonClient, HD_PATH};
-use std::io::{self};
-use ton_client::crypto::{
-    register_encryption_box, remove_encryption_box,
-    EncryptionBoxHandle, RegisteredEncryptionBox, ChaCha20ParamsEB, ChaCha20EncryptionBox,
-    NaclBoxParamsEB, NaclEncryptionBox, NaclSecretBoxParamsEB, NaclSecretEncryptionBox
-};
+use crate::helpers::TonClient;
+use crate::helpers::HD_PATH;
 
 #[derive(Clone, Copy)]
 pub(crate) enum EncryptionBoxType {
@@ -32,9 +40,7 @@ impl Drop for TerminalEncryptionBox {
         if self.handle.0 != 0 {
             let _ = remove_encryption_box(
                 self.client.clone(),
-                RegisteredEncryptionBox {
-                    handle: self.handle(),
-                },
+                RegisteredEncryptionBox { handle: self.handle() },
             );
         }
     }
@@ -58,47 +64,49 @@ impl TerminalEncryptionBox {
             EncryptionBoxType::SecretNaCl => {
                 register_encryption_box(
                     params.context.clone(),
-                    NaclSecretEncryptionBox::new(NaclSecretBoxParamsEB {
-                        key,
-                        nonce: params.nonce,
-                    },
-                    Some(HD_PATH.to_owned()))
+                    NaclSecretEncryptionBox::new(
+                        NaclSecretBoxParamsEB { key, nonce: params.nonce },
+                        Some(HD_PATH.to_owned()),
+                    ),
                 )
-                .await.map_err(|e| e.to_string())?.handle
-            },
+                .await
+                .map_err(|e| e.to_string())?
+                .handle
+            }
             EncryptionBoxType::NaCl => {
                 register_encryption_box(
                     params.context.clone(),
-                    NaclEncryptionBox::new(NaclBoxParamsEB {
-                        their_public: params.their_pubkey,
-                        secret: key,
-                        nonce: params.nonce,
-                    },
-                    Some(HD_PATH.to_owned()))
+                    NaclEncryptionBox::new(
+                        NaclBoxParamsEB {
+                            their_public: params.their_pubkey,
+                            secret: key,
+                            nonce: params.nonce,
+                        },
+                        Some(HD_PATH.to_owned()),
+                    ),
                 )
-                .await.map_err(|e| e.to_string())?.handle
-            },
+                .await
+                .map_err(|e| e.to_string())?
+                .handle
+            }
             EncryptionBoxType::ChaCha20 => {
                 register_encryption_box(
                     params.context.clone(),
                     ChaCha20EncryptionBox::new(
-                        ChaCha20ParamsEB {
-                            key,
-                            nonce: params.nonce,
-                        },
-                        Some(HD_PATH.to_owned())
-                    ).map_err(|e| e.to_string())?
+                        ChaCha20ParamsEB { key, nonce: params.nonce },
+                        Some(HD_PATH.to_owned()),
+                    )
+                    .map_err(|e| e.to_string())?,
                 )
-                .await.map_err(|e| e.to_string())?.handle
-            },
+                .await
+                .map_err(|e| e.to_string())?
+                .handle
+            }
         };
-        Ok(Self {
-            handle: registered_box,
-            client: params.context.clone(),
-        })
+        Ok(Self { handle: registered_box, client: params.context.clone() })
     }
+
     pub fn handle(&self) -> EncryptionBoxHandle {
         self.handle.clone()
     }
 }
-

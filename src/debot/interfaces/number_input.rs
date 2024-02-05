@@ -1,9 +1,14 @@
-use crate::debot::term_browser::terminal_input;
-use serde_json::{Value, json};
+use serde_json::json;
+use serde_json::Value;
 use ton_client::abi::Abi;
-use ton_client::debot::{DebotInterface, InterfaceResult};
-use super::dinterface::{decode_answer_id, decode_int256, decode_prompt};
+use ton_client::debot::DebotInterface;
+use ton_client::debot::InterfaceResult;
 use ton_client::encoding::decode_abi_bigint;
+
+use super::dinterface::decode_answer_id;
+use super::dinterface::decode_int256;
+use super::dinterface::decode_prompt;
+use crate::debot::term_browser::terminal_input;
 
 const ID: &str = "c5a9558b2664aed7dc3e6123436d544f13ffe69ab0e259412f48c6d1c8588401";
 
@@ -53,6 +58,7 @@ impl NumberInput {
     pub fn new() -> Self {
         Self {}
     }
+
     fn get(&self, args: &Value) -> InterfaceResult {
         let answer_id = decode_answer_id(args)?;
         let prompt = decode_prompt(args)?;

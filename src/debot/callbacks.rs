@@ -1,26 +1,34 @@
-/*
-* Copyright 2018-2021 TON DEV SOLUTIONS LTD.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright 2018-2021 TON DEV SOLUTIONS LTD.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
+use std::collections::VecDeque;
+use std::io;
+use std::sync::Arc;
+use std::sync::RwLock;
+
+use ton_client::crypto::SigningBoxHandle;
+use ton_client::debot::BrowserCallbacks;
+use ton_client::debot::DAction;
+use ton_client::debot::DebotActivity;
+use ton_client::debot::STATE_EXIT;
+use ton_client::error::ClientResult;
+
+use super::action_input;
+use super::input;
 use super::term_signing_box::TerminalSigningBox;
-use super::{action_input, input, terminal_input, ChainProcessor, ProcessorError};
+use super::terminal_input;
+use super::ChainProcessor;
+use super::ProcessorError;
 use crate::config::Config;
 use crate::convert::convert_u64_to_tokens;
 use crate::helpers::TonClient;
-use std::collections::VecDeque;
-use std::io;
-use std::sync::{Arc, RwLock};
-use ton_client::crypto::SigningBoxHandle;
-use ton_client::debot::{BrowserCallbacks, DAction, DebotActivity, STATE_EXIT};
-use ton_client::error::ClientResult;
 
 #[derive(Default)]
 struct ActiveState {
@@ -123,10 +131,7 @@ impl BrowserCallbacks for Callbacks {
         let result = self.processor.write().await.next_signing_box();
         let handle = match result {
             Err(ProcessorError::InterfaceCallNeeded) => {
-                TerminalSigningBox::new::<&[u8]>(self.client.clone(), vec![], None)
-                    .await?
-                    .leak()
-                    .0
+                TerminalSigningBox::new::<&[u8]>(self.client.clone(), vec![], None).await?.leak().0
             }
             Err(e) => return Err(format!("{:?}", e)),
             Ok(handle) => handle,
@@ -164,10 +169,7 @@ impl BrowserCallbacks for Callbacks {
                 info += "DeBot is going to create an onchain transaction.\n";
                 info += "Details:\n";
                 info += &format!("  account: {}\n", dst);
-                info += &format!(
-                    "  Transaction fees: {} tokens\n",
-                    convert_u64_to_tokens(fee)
-                );
+                info += &format!("  Transaction fees: {} tokens\n", convert_u64_to_tokens(fee));
                 if !out.is_empty() {
                     info += "  Outgoing transfers from the account:\n";
                     for spending in out {
@@ -182,8 +184,7 @@ impl BrowserCallbacks for Callbacks {
                 }
                 info += &format!("  Message signer public key: {}\n", signkey);
                 if setcode {
-                    info +=
-                        "  Warning: the transaction will change the account's code\n";
+                    info += "  Warning: the transaction will change the account's code\n";
                 }
                 "Confirm the transaction (y/n)?"
             }

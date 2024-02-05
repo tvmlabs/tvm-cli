@@ -1,39 +1,64 @@
-/*
- * Copyright 2018-2023 EverX.
- *
- * Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
- * this file except in compliance with the License.
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific TON DEV software governing permissions and
- * limitations under the License.
- */
+// Copyright 2018-2023 EverX.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
 use clap::ArgMatches;
-use serde_json::{Map, Value};
-use ton_block::{Account, Deserializable, Serializable};
+use serde_json::Map;
+use serde_json::Value;
+use ton_block::Account;
+use ton_block::Deserializable;
+use ton_block::Serializable;
 use ton_client::abi::FunctionHeader;
-use ton_client::tvm::{ExecutionOptions, ParamsOfRunGet, ParamsOfRunTvm, run_get, run_tvm};
-use crate::config::{Config, FullConfig};
+use ton_client::tvm::run_get;
+use ton_client::tvm::run_tvm;
+use ton_client::tvm::ExecutionOptions;
+use ton_client::tvm::ParamsOfRunGet;
+use ton_client::tvm::ParamsOfRunTvm;
+
 use crate::call::print_json_result;
-use crate::debug::{debug_error, DebugParams, init_debug_logger};
-use crate::helpers::{create_client, now, now_ms, TonClient,
-                     contract_data_from_matches_or_config_alias, abi_from_matches_or_config,
-                     AccountSource, create_client_local, create_client_verbose, load_abi,
-                     load_account, load_params, unpack_alternative_params, get_blockchain_config};
+use crate::config::Config;
+use crate::config::FullConfig;
+use crate::debug::debug_error;
+use crate::debug::init_debug_logger;
+use crate::debug::DebugParams;
+use crate::helpers::abi_from_matches_or_config;
+use crate::helpers::contract_data_from_matches_or_config_alias;
+use crate::helpers::create_client;
+use crate::helpers::create_client_local;
+use crate::helpers::create_client_verbose;
+use crate::helpers::get_blockchain_config;
+use crate::helpers::load_abi;
+use crate::helpers::load_account;
+use crate::helpers::load_params;
+use crate::helpers::now;
+use crate::helpers::now_ms;
+use crate::helpers::unpack_alternative_params;
+use crate::helpers::AccountSource;
+use crate::helpers::TonClient;
 use crate::message::prepare_message;
 use crate::replay::construct_blockchain_config;
 
-pub async fn run_command(matches: &ArgMatches<'_>, full_config: &FullConfig, is_alternative: bool) -> Result<(), String> {
+pub async fn run_command(
+    matches: &ArgMatches<'_>,
+    full_config: &FullConfig,
+    is_alternative: bool,
+) -> Result<(), String> {
     let config = &full_config.config;
     let (address, abi_path) = if is_alternative {
-        let (address,abi, _) = contract_data_from_matches_or_config_alias(matches, full_config)?;
+        let (address, abi, _) = contract_data_from_matches_or_config_alias(matches, full_config)?;
         (address.unwrap(), abi.unwrap())
     } else {
-        (matches.value_of("ADDRESS").unwrap().to_string(),
-        abi_from_matches_or_config(matches, &config)?)
+        (
+            matches.value_of("ADDRESS").unwrap().to_string(),
+            abi_from_matches_or_config(matches, &config)?,
+        )
     };
     let account_source = if matches.is_present("TVC") {
         AccountSource::TVC
@@ -44,7 +69,9 @@ pub async fn run_command(matches: &ArgMatches<'_>, full_config: &FullConfig, is_
     };
 
     let method = if is_alternative {
-        matches.value_of("METHOD").or(config.method.as_deref())
+        matches
+            .value_of("METHOD")
+            .or(config.method.as_deref())
             .ok_or("Method is not defined. Supply it in the config file or command line.")?
     } else {
         matches.value_of("METHOD").unwrap()
@@ -58,18 +85,24 @@ pub async fn run_command(matches: &ArgMatches<'_>, full_config: &FullConfig, is_
         create_client_local()?
     };
 
-    let (account, account_boc) = load_account(
-        &account_source,
-        &address,
-        Some(ton_client.clone()),
-        &config
-    ).await?;
+    let (account, account_boc) =
+        load_account(&account_source, &address, Some(ton_client.clone()), &config).await?;
     let address = match account_source {
         AccountSource::NETWORK => address,
         AccountSource::BOC => account.get_addr().unwrap().to_string(),
-        AccountSource::TVC => std::iter::repeat("0").take(64).collect()
+        AccountSource::TVC => std::iter::repeat("0").take(64).collect(),
     };
-    run(matches, config, Some(ton_client), &address, account_boc, abi_path, is_alternative, trace_path).await
+    run(
+        matches,
+        config,
+        Some(ton_client),
+        &address,
+        account_boc,
+        abi_path,
+        is_alternative,
+        trace_path,
+    )
+    .await
 }
 
 async fn run(
@@ -83,8 +116,10 @@ async fn run(
     trace_path: String,
 ) -> Result<(), String> {
     let method = if is_alternative {
-        matches.value_of("METHOD").or(config.method.as_deref())
-        .ok_or("Method is not defined. Supply it in the config file or command line.")?
+        matches
+            .value_of("METHOD")
+            .or(config.method.as_deref())
+            .ok_or("Method is not defined. Supply it in the config file or command line.")?
     } else {
         matches.value_of("METHOD").unwrap()
     };
@@ -94,10 +129,8 @@ async fn run(
         println!("Running get-method...");
     }
     let ton_client = match ton_client {
-        Some(ton_client) => { ton_client },
-        None => {
-            create_client_local()?
-        }
+        Some(ton_client) => ton_client,
+        None => create_client_local()?,
     };
 
     let abi = load_abi(&abi_path, config).await?;
@@ -110,10 +143,7 @@ async fn run(
     let params = load_params(&params)?;
 
     let expire_at = config.lifetime + now();
-    let header = FunctionHeader {
-        expire: Some(expire_at),
-        ..Default::default()
-    };
+    let header = FunctionHeader { expire: Some(expire_at), ..Default::default() };
 
     let msg = prepare_message(
         ton_client.clone(),
@@ -124,7 +154,8 @@ async fn run(
         Some(header),
         None,
         config.is_json,
-    ).await?;
+    )
+    .await?;
 
     let execution_options = prepare_execution_options(bc_config.clone())?;
     let result = run_tvm(
@@ -137,7 +168,8 @@ async fn run(
             execution_options,
             ..Default::default()
         },
-    ).await;
+    )
+    .await;
 
     let result = match result {
         Ok(result) => result,
@@ -166,7 +198,7 @@ async fn run(
         match res {
             Some(data) => {
                 print_json_result(data, config)?;
-            },
+            }
             None => {
                 println!("Failed to decode output messages. Check that abi matches the contract.");
                 println!("Messages in base64:\n{:?}", result.out_messages);
@@ -184,20 +216,26 @@ fn prepare_execution_options(bc_config: Option<&str>) -> Result<Option<Execution
             .map_err(|e| format!("Failed to deserialize {config}: {e}"))?;
         if let Ok(acc) = Account::construct_from_cell(cell.clone()) {
             let config = construct_blockchain_config(&acc)?;
-            bytes = config.raw_config().write_to_bytes()
-               .map_err(|e| format!("Failed to serialize config params: {e}"))?;
+            bytes = config
+                .raw_config()
+                .write_to_bytes()
+                .map_err(|e| format!("Failed to serialize config params: {e}"))?;
         }
         let blockchain_config = Some(base64::encode(bytes));
-        let ex_opt = ExecutionOptions {
-            blockchain_config,
-            ..Default::default()
-        };
+        let ex_opt = ExecutionOptions { blockchain_config, ..Default::default() };
         return Ok(Some(ex_opt));
     }
     Ok(None)
 }
 
-pub async fn run_get_method(config: &Config, addr: &str, method: &str, params: Option<String>, source_type: AccountSource, bc_config: Option<&str>) -> Result<(), String> {
+pub async fn run_get_method(
+    config: &Config,
+    addr: &str,
+    method: &str,
+    params: Option<String>,
+    source_type: AccountSource,
+    bc_config: Option<&str>,
+) -> Result<(), String> {
     let ton = if source_type == AccountSource::NETWORK {
         create_client_verbose(&config)?
     } else {
@@ -206,7 +244,8 @@ pub async fn run_get_method(config: &Config, addr: &str, method: &str, params: O
 
     let (_, acc_boc) = load_account(&source_type, addr, Some(ton.clone()), config).await?;
 
-    let params = params.map(|p| serde_json::from_str(&p))
+    let params = params
+        .map(|p| serde_json::from_str(&p))
         .transpose()
         .map_err(|e| format!("arguments are not in json format: {}", e))?;
 
@@ -223,9 +262,10 @@ pub async fn run_get_method(config: &Config, addr: &str, method: &str, params: O
             execution_options,
             ..Default::default()
         },
-    ).await
-        .map_err(|e| format!("run failed: {}", e.to_string()))?
-        .output;
+    )
+    .await
+    .map_err(|e| format!("run failed: {}", e.to_string()))?
+    .output;
 
     if !config.is_json {
         println!("Succeeded.");
@@ -239,7 +279,7 @@ pub async fn run_get_method(config: &Config, addr: &str, method: &str, params: O
                     res.insert(format!("value{}", i), val.to_owned());
                     i = 1 + i;
                 }
-            },
+            }
             _ => {
                 res.insert("value0".to_owned(), result);
             }

@@ -1,15 +1,20 @@
-use super::dinterface::{decode_answer_id, decode_prompt, decode_array};
-
-use serde_json::Value;
-use ton_client::abi::Abi;
-use ton_client::debot::{DebotInterface, InterfaceResult};
-use ton_client::encoding::decode_abi_bigint;
-use crate::helpers::TonClient;
-use crate::debot::term_signing_box::TerminalSigningBox;
-use crate::debot::{ChainProcessor, ProcessorError};
-use tokio::sync::RwLock;
 use std::sync::Arc;
+
 use serde_json::json;
+use serde_json::Value;
+use tokio::sync::RwLock;
+use ton_client::abi::Abi;
+use ton_client::debot::DebotInterface;
+use ton_client::debot::InterfaceResult;
+use ton_client::encoding::decode_abi_bigint;
+
+use super::dinterface::decode_answer_id;
+use super::dinterface::decode_array;
+use super::dinterface::decode_prompt;
+use crate::debot::term_signing_box::TerminalSigningBox;
+use crate::debot::ChainProcessor;
+use crate::debot::ProcessorError;
+use crate::helpers::TonClient;
 
 pub const ID: &str = "c13024e101c95e71afb1f5fa6d72f633d51e721de0320d73dfd6121a54e4d40a";
 
@@ -65,29 +70,23 @@ impl SigningBoxInput {
     async fn get(&self, args: &Value) -> InterfaceResult {
         let answer_id = decode_answer_id(args)?;
         let prompt = decode_prompt(args)?;
-        let possible_keys = decode_array(
-            args,
-            "possiblePublicKeys",
-            |elem| {
-                decode_abi_bigint(elem.as_str()?).ok()?;
-                Some(elem.as_str().unwrap().to_string())
-            }
-        )?;
+        let possible_keys = decode_array(args, "possiblePublicKeys", |elem| {
+            decode_abi_bigint(elem.as_str()?).ok()?;
+            Some(elem.as_str().unwrap().to_string())
+        })?;
         println!("{}", prompt);
         let result = self.processor.write().await.next_signing_box();
         match result {
             Err(ProcessorError::InterfaceCallNeeded) => {
-                let signing_box = TerminalSigningBox::new::<&[u8]>(
-                    self.client.clone(), possible_keys, None
-                ).await?;
+                let signing_box =
+                    TerminalSigningBox::new::<&[u8]>(self.client.clone(), possible_keys, None)
+                        .await?;
                 let handle = signing_box.handle();
                 self.handles.write().await.push(signing_box);
                 Ok((answer_id, json!({ "handle": handle.0})))
             }
             Err(e) => return Err(format!("{:?}", e)),
-            Ok(handle) => {
-                Ok((answer_id, json!({ "handle": handle}) ))
-            }
+            Ok(handle) => Ok((answer_id, json!({ "handle": handle}))),
         }
     }
 }

@@ -1,12 +1,20 @@
-use super::dinterface::{decode_answer_id, decode_nonce, decode_prompt, decode_arg, decode_num_arg};
-use crate::debot::term_encryption_box::{
-    EncryptionBoxType, ParamsOfTerminalEncryptionBox, TerminalEncryptionBox,
-};
-use crate::helpers::TonClient;
-use serde_json::{Value, json};
+use serde_json::json;
+use serde_json::Value;
 use tokio::sync::RwLock;
-use ton_client::{abi::Abi, crypto::EncryptionBoxHandle};
-use ton_client::debot::{DebotInterface, InterfaceResult};
+use ton_client::abi::Abi;
+use ton_client::crypto::EncryptionBoxHandle;
+use ton_client::debot::DebotInterface;
+use ton_client::debot::InterfaceResult;
+
+use super::dinterface::decode_answer_id;
+use super::dinterface::decode_arg;
+use super::dinterface::decode_nonce;
+use super::dinterface::decode_num_arg;
+use super::dinterface::decode_prompt;
+use crate::debot::term_encryption_box::EncryptionBoxType;
+use crate::debot::term_encryption_box::ParamsOfTerminalEncryptionBox;
+use crate::debot::term_encryption_box::TerminalEncryptionBox;
+use crate::helpers::TonClient;
 
 const ID: &str = "5b5f76b54d976d72f1ada3063d1af2e5352edaf1ba86b3b311170d4d81056d61";
 
@@ -102,10 +110,7 @@ pub struct EncryptionBoxInput {
 
 impl EncryptionBoxInput {
     pub fn new(client: TonClient) -> Self {
-        Self {
-            handles: RwLock::new(vec![]),
-            client,
-        }
+        Self { handles: RwLock::new(vec![]), client }
     }
 
     async fn get_nacl_box(&self, args: &Value) -> InterfaceResult {
@@ -119,9 +124,11 @@ impl EncryptionBoxInput {
             box_type: EncryptionBoxType::NaCl,
             their_pubkey,
             nonce,
-        }).await;
+        })
+        .await;
         Ok((answer_id, json!({ "handle": self.insert_box(result).await.0 })))
     }
+
     async fn get_nacl_secret_box(&self, args: &Value) -> InterfaceResult {
         let answer_id = decode_answer_id(args)?;
         let prompt = decode_prompt(args)?;
@@ -136,6 +143,7 @@ impl EncryptionBoxInput {
         .await;
         Ok((answer_id, json!({ "handle": self.insert_box(result).await.0})))
     }
+
     async fn get_chacha20_box(&self, args: &Value) -> InterfaceResult {
         let answer_id = decode_answer_id(args)?;
         let nonce = decode_nonce(args)?;
@@ -150,6 +158,7 @@ impl EncryptionBoxInput {
         .await;
         Ok((answer_id, json!({ "handle": self.insert_box(result).await.0})))
     }
+
     async fn remove_handle(&self, args: &Value) -> InterfaceResult {
         let answer_id = decode_answer_id(args)?;
         let handle = decode_num_arg::<u32>(args, "handle")?;
@@ -159,6 +168,7 @@ impl EncryptionBoxInput {
         let removed: bool = initial_size != handles.len();
         Ok((answer_id, json!({ "removed": removed })))
     }
+
     async fn get_supported_algorithms(&self, args: &Value) -> InterfaceResult {
         let answer_id = decode_answer_id(args)?;
         Ok((
@@ -173,13 +183,17 @@ impl EncryptionBoxInput {
             }),
         ))
     }
-    async fn insert_box(&self, result_box: Result<TerminalEncryptionBox, String>) -> EncryptionBoxHandle {
+
+    async fn insert_box(
+        &self,
+        result_box: Result<TerminalEncryptionBox, String>,
+    ) -> EncryptionBoxHandle {
         match result_box {
             Ok(enc_box) => {
                 let handle = enc_box.handle();
                 self.handles.write().await.push(enc_box);
                 handle
-            },
+            }
             Err(_) => 0.into(),
         }
     }
@@ -206,4 +220,3 @@ impl DebotInterface for EncryptionBoxInput {
         }
     }
 }
-

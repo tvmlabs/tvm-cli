@@ -1,46 +1,36 @@
 use assert_cmd::Command;
 mod common;
-use common::{GIVER_V2_ADDR, BIN_NAME, GIVER_V2_ABI, GIVER_V2_KEY, NETWORK};
+use common::BIN_NAME;
+use common::GIVER_V2_ABI;
+use common::GIVER_V2_ADDR;
+use common::GIVER_V2_KEY;
+use common::NETWORK;
 
 #[test]
 fn test_network() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
-    cmd.arg("config")
-        .arg("clear");
-    cmd.assert()
-        .success();
+    cmd.arg("config").arg("clear");
+    cmd.assert().success();
 
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
-    cmd.arg("config")
-        .arg("endpoint")
-        .arg("reset");
-    cmd.assert()
-        .success();
+    cmd.arg("config").arg("endpoint").arg("reset");
+    cmd.assert().success();
 
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
-    cmd.arg("config")
-        .arg("--global")
-        .arg("clear");
-    cmd.assert()
-        .success();
+    cmd.arg("config").arg("--global").arg("clear");
+    cmd.assert().success();
 
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
-    cmd.arg("config")
-        .arg("--global")
-        .arg("endpoint")
-        .arg("reset");
-    cmd.assert()
-        .success();
+    cmd.arg("config").arg("--global").arg("endpoint").arg("reset");
+    cmd.assert().success();
 
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
-    cmd.arg("config")
-        .arg("--url")
-        .arg(&*NETWORK);
-    cmd.assert()
-        .success();
+    cmd.arg("config").arg("--url").arg(&*NETWORK);
+    cmd.assert().success();
 
     let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
-    let res = cmd.arg("call")
+    let res = cmd
+        .arg("call")
         .arg("--abi")
         .arg(GIVER_V2_ABI)
         .arg(GIVER_V2_ADDR)
@@ -56,7 +46,9 @@ fn test_network() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if res.unwrap().contains("Fetch first block failed: Can not send http request:") {
-        return Err(string_error::into_err("Node SE is not running. If it is CI run, just restart it.".to_string()));
+        return Err(string_error::into_err(
+            "Node SE is not running. If it is CI run, just restart it.".to_string(),
+        ));
     }
     Ok(())
 }

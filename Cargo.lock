@@ -3920,3 +3920,11 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "tvm_cli"
+version = "1.45.1"
+
+[[patch.unused]]
+name = "tvm_client"
+version = "1.45.1"

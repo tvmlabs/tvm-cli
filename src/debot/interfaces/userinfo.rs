@@ -1,10 +1,13 @@
+use serde_json::json;
+use serde_json::Value;
+use ton_client::abi::Abi;
+use ton_client::debot::DebotInterface;
+use ton_client::debot::InterfaceResult;
+
 use super::dinterface::decode_answer_id;
 use crate::config::Config;
 use crate::debot::term_signing_box::TerminalSigningBox;
 use crate::helpers::TonClient;
-use serde_json::{Value, json};
-use ton_client::abi::Abi;
-use ton_client::debot::{DebotInterface, InterfaceResult};
 
 const ID: &str = "a56115147709ed3437efb89460b94a120b7fe94379c795d1ebb0435a847ee580";
 
@@ -76,21 +79,13 @@ impl UserInfo {
 
     fn get_account(&self, args: &Value) -> InterfaceResult {
         let answer_id = decode_answer_id(args)?;
-        let value = self
-            .config
-            .wallet
-            .clone()
-            .unwrap_or_else(|| format!("0:{:064}", 0));
+        let value = self.config.wallet.clone().unwrap_or_else(|| format!("0:{:064}", 0));
         Ok((answer_id, json!({ "value": value })))
     }
 
     fn get_public_key(&self, args: &Value) -> InterfaceResult {
         let answer_id = decode_answer_id(args)?;
-        let value = self
-            .config
-            .pubkey
-            .clone()
-            .unwrap_or_else(|| format!("0x{:064}", 0));
+        let value = self.config.pubkey.clone().unwrap_or_else(|| format!("0x{:064}", 0));
         Ok((answer_id, json!({ "value": value })))
     }
 

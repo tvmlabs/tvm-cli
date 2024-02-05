@@ -1,8 +1,12 @@
-use crate::debot::term_browser::terminal_input;
-use serde_json::{Value, json};
+use serde_json::json;
+use serde_json::Value;
 use ton_client::abi::Abi;
-use ton_client::debot::{DebotInterface, InterfaceResult};
-use super::dinterface::{decode_answer_id, decode_prompt};
+use ton_client::debot::DebotInterface;
+use ton_client::debot::InterfaceResult;
+
+use super::dinterface::decode_answer_id;
+use super::dinterface::decode_prompt;
+use crate::debot::term_browser::terminal_input;
 
 const ID: &str = "16653eaf34c921467120f2685d425ff963db5cbb5aa676a62a2e33bfc3f6828a";
 
@@ -50,6 +54,7 @@ impl ConfirmInput {
     pub fn new() -> Self {
         Self {}
     }
+
     fn get(&self, args: &Value) -> InterfaceResult {
         let answer_id = decode_answer_id(args)?;
         let prompt = decode_prompt(args)?;

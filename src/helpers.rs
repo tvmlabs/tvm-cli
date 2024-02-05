@@ -1,39 +1,58 @@
-/*
- * Copyright 2018-2023 EverX.
- *
- * Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
- * this file except in compliance with the License.
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific TON DEV software governing permissions and
- * limitations under the License.
- */
+// Copyright 2018-2023 EverX.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 use std::env;
 use std::path::PathBuf;
-use crate::config::{Config, LOCALNET};
-use crate::debug::debug_level_from_env;
-
-use std::sync::Arc;
-use std::time::{Duration, SystemTime};
-use ton_client::abi::{
-    Abi, AbiConfig, AbiContract, DecodedMessageBody, DeploySet, ParamsOfDecodeMessageBody,
-    ParamsOfEncodeMessage, Signer,
-};
-use ton_client::crypto::{CryptoConfig, KeyPair, MnemonicDictionary};
-use ton_client::error::ClientError;
-use ton_client::net::{query_collection, OrderBy, ParamsOfQueryCollection, NetworkConfig};
-use ton_client::{ClientConfig, ClientContext};
-use ton_block::{Account, MsgAddressInt, Deserializable, CurrencyCollection, StateInit, Serializable};
 use std::str::FromStr;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::SystemTime;
+
 use clap::ArgMatches;
-use serde_json::{Value, json};
+use serde_json::json;
+use serde_json::Value;
+use ton_block::Account;
+use ton_block::CurrencyCollection;
+use ton_block::Deserializable;
+use ton_block::MsgAddressInt;
+use ton_block::Serializable;
+use ton_block::StateInit;
+use ton_client::abi::Abi;
+use ton_client::abi::AbiConfig;
+use ton_client::abi::AbiContract;
+use ton_client::abi::DecodedMessageBody;
+use ton_client::abi::DeploySet;
+use ton_client::abi::ParamsOfDecodeMessageBody;
+use ton_client::abi::ParamsOfEncodeMessage;
+use ton_client::abi::Signer;
+use ton_client::crypto::CryptoConfig;
+use ton_client::crypto::KeyPair;
+use ton_client::crypto::MnemonicDictionary;
+use ton_client::error::ClientError;
+use ton_client::net::query_collection;
+use ton_client::net::NetworkConfig;
+use ton_client::net::OrderBy;
+use ton_client::net::ParamsOfQueryCollection;
+use ton_client::ClientConfig;
+use ton_client::ClientContext;
 use ton_executor::BlockchainConfig;
 use url::Url;
+
 use crate::call::parse_params;
-use crate::{FullConfig, resolve_net_name};
-use crate::replay::{CONFIG_ADDR, construct_blockchain_config};
+use crate::config::Config;
+use crate::config::LOCALNET;
+use crate::debug::debug_level_from_env;
+use crate::replay::construct_blockchain_config;
+use crate::replay::CONFIG_ADDR;
+use crate::resolve_net_name;
+use crate::FullConfig;
 
 pub const HD_PATH: &str = "m/44'/396'/0'/0/0";
 pub const WORD_COUNT: u8 = 12;
@@ -43,9 +62,7 @@ const GLOBAL_CONFIG_PATH: &str = ".tonos-cli.global.conf.json";
 
 pub fn default_config_name() -> String {
     env::current_dir()
-        .map(|dir| {
-            dir.join(PathBuf::from(CONFIG_BASE_NAME)).to_str().unwrap().to_string()
-        })
+        .map(|dir| dir.join(PathBuf::from(CONFIG_BASE_NAME)).to_str().unwrap().to_string())
         .unwrap_or(CONFIG_BASE_NAME.to_string())
 }
 
@@ -82,19 +99,17 @@ impl log::Log for SimpleLogger {
 pub fn read_keys(filename: &str) -> Result<KeyPair, String> {
     let keys_str = std::fs::read_to_string(filename)
         .map_err(|e| format!("failed to read the keypair file: {}", e))?;
-    let keys: KeyPair = serde_json::from_str(&keys_str)
-        .map_err(|e| format!("failed to load keypair: {}", e))?;
+    let keys: KeyPair =
+        serde_json::from_str(&keys_str).map_err(|e| format!("failed to load keypair: {}", e))?;
     Ok(keys)
 }
 
 pub fn load_ton_address(addr: &str, config: &Config) -> Result<String, String> {
-    let addr = if addr.find(':').is_none() {
-        format!("{}:{}", config.wc, addr)
-    } else {
-        addr.to_owned()
-    };
-    let _ = MsgAddressInt::from_str(&addr)
-        .map_err(|e| format!("Address is specified in the wrong format. Error description: {}", e))?;
+    let addr =
+        if addr.find(':').is_none() { format!("{}:{}", config.wc, addr) } else { addr.to_owned() };
+    let _ = MsgAddressInt::from_str(&addr).map_err(|e| {
+        format!("Address is specified in the wrong format. Error description: {}", e)
+    })?;
     Ok(addr)
 }
 
@@ -122,14 +137,17 @@ pub fn get_server_endpoints(config: &Config) -> Vec<String> {
         0 => vec![config.url.clone()],
         _ => config.endpoints.clone(),
     };
-    cur_endpoints.iter_mut().map(|end| {
+    cur_endpoints
+        .iter_mut()
+        .map(|end| {
             let mut end = end.trim_end_matches('/').to_owned();
-        if config.project_id.is_some() {
-            end.push_str("/");
-            end.push_str(&config.project_id.clone().unwrap());
-        }
-        end.to_owned()
-    }).collect::<Vec<String>>()
+            if config.project_id.is_some() {
+                end.push_str("/");
+                end.push_str(&config.project_id.clone().unwrap());
+            }
+            end.to_owned()
+        })
+        .collect::<Vec<String>>()
 }
 
 pub fn create_client(config: &Config) -> Result<TonClient, String> {
@@ -138,7 +156,8 @@ pub fn create_client(config: &Config) -> Result<TonClient, String> {
         println!("Connecting to:\n\tUrl: {}", config.url);
         println!("\tEndpoints: {:?}\n", modified_endpoints);
     }
-    let endpoints_cnt = if resolve_net_name(&config.url).unwrap_or(config.url.clone()).eq(LOCALNET) {
+    let endpoints_cnt = if resolve_net_name(&config.url).unwrap_or(config.url.clone()).eq(LOCALNET)
+    {
         1_u8
     } else {
         modified_endpoints.len() as u8
@@ -157,11 +176,7 @@ pub fn create_client(config: &Config) -> Result<TonClient, String> {
         network: NetworkConfig {
             server_address: Some(config.url.to_owned()),
             sending_endpoint_count: endpoints_cnt,
-            endpoints: if modified_endpoints.is_empty() {
-                    None
-                } else {
-                    Some(modified_endpoints)
-                },
+            endpoints: if modified_endpoints.is_empty() { None } else { Some(modified_endpoints) },
             message_retries_count: config.retries as i8,
             message_processing_timeout: config.timeout,
             wait_for_timeout: config.timeout,
@@ -190,16 +205,21 @@ pub async fn query_raw(
     filter: Option<&str>,
     limit: Option<&str>,
     order: Option<&str>,
-    result: &str
-) -> Result<(), String>
-{
+    result: &str,
+) -> Result<(), String> {
     let context = create_client_verbose(config)?;
 
-    let filter = filter.map(|s| serde_json::from_str(s)).transpose()
+    let filter = filter
+        .map(|s| serde_json::from_str(s))
+        .transpose()
         .map_err(|e| format!("Failed to parse filter field: {}", e))?;
-    let limit = limit.map(|s| s.parse::<u32>()).transpose()
+    let limit = limit
+        .map(|s| s.parse::<u32>())
+        .transpose()
         .map_err(|e| format!("Failed to parse limit field: {}", e))?;
-    let order = order.map(|s| serde_json::from_str(s)).transpose()
+    let order = order
+        .map(|s| serde_json::from_str(s))
+        .transpose()
         .map_err(|e| format!("Failed to parse order field: {}", e))?;
 
     let query = ton_client::net::query_collection(
@@ -211,8 +231,10 @@ pub async fn query_raw(
             order,
             result: result.to_owned(),
             ..Default::default()
-        }
-    ).await.map_err(|e| format!("Failed to execute query: {}", e))?;
+        },
+    )
+    .await
+    .map_err(|e| format!("Failed to execute query: {}", e))?;
 
     println!("{:#}", Value::Array(query.result));
     Ok(())
@@ -237,14 +259,11 @@ pub async fn query_with_limit(
             ..Default::default()
         },
     )
-        .await
-        .map(|r| r.result)
+    .await
+    .map(|r| r.result)
 }
 
-pub async fn query_message(
-    ton: TonClient,
-    message_id: &str,
-) -> Result<String, String> {
+pub async fn query_message(ton: TonClient, message_id: &str) -> Result<String, String> {
     let messages = query_with_limit(
         ton.clone(),
         "messages",
@@ -252,17 +271,24 @@ pub async fn query_message(
         "boc",
         None,
         Some(1),
-    ).await
-        .map_err(|e| format!("failed to query account data: {}", e))?;
+    )
+    .await
+    .map_err(|e| format!("failed to query account data: {}", e))?;
     if messages.is_empty() {
         Err("message with specified id was not found.".to_string())
-    }
-    else {
-        Ok(messages[0]["boc"].as_str().ok_or("Failed to obtain message boc.".to_string())?.to_string())
+    } else {
+        Ok(messages[0]["boc"]
+            .as_str()
+            .ok_or("Failed to obtain message boc.".to_string())?
+            .to_string())
     }
 }
 
-pub async fn query_account_field(ton: TonClient, address: &str, field: &str) -> Result<String, String> {
+pub async fn query_account_field(
+    ton: TonClient,
+    address: &str,
+    field: &str,
+) -> Result<String, String> {
     let accounts = query_with_limit(
         ton.clone(),
         "accounts",
@@ -270,8 +296,9 @@ pub async fn query_account_field(ton: TonClient, address: &str, field: &str) -> 
         field,
         None,
         Some(1),
-    ).await
-        .map_err(|e| format!("failed to query account data: {}", e))?;
+    )
+    .await
+    .map_err(|e| format!("failed to query account data: {}", e))?;
     if accounts.is_empty() {
         return Err(format!("account with address {} not found", address));
     }
@@ -282,7 +309,6 @@ pub async fn query_account_field(ton: TonClient, address: &str, field: &str) -> 
     Ok(data.unwrap().to_string())
 }
 
-
 pub async fn decode_msg_body(
     ton: TonClient,
     abi_path: &str,
@@ -290,16 +316,10 @@ pub async fn decode_msg_body(
     is_internal: bool,
     config: &Config,
 ) -> Result<DecodedMessageBody, String> {
-
     let abi = load_abi(abi_path, config).await?;
     ton_client::abi::decode_message_body(
         ton,
-        ParamsOfDecodeMessageBody {
-            abi,
-            body: body.to_owned(),
-            is_internal,
-            ..Default::default()
-        },
+        ParamsOfDecodeMessageBody { abi, body: body.to_owned(), is_internal, ..Default::default() },
     )
     .map_err(|e| format!("failed to decode body: {}", e))
 }
@@ -311,11 +331,11 @@ pub async fn load_abi_str(abi_path: &str, config: &Config) -> Result<String, Str
     }
     if Url::parse(abi_path).is_ok() {
         let abi_bytes = load_file_with_url(abi_path, config.timeout as u64).await?;
-        return Ok(String::from_utf8(abi_bytes)
-            .map_err(|e| format!("Downloaded string contains not valid UTF8 characters: {}", e))?);
+        return Ok(String::from_utf8(abi_bytes).map_err(|e| {
+            format!("Downloaded string contains not valid UTF8 characters: {}", e)
+        })?);
     }
-    Ok(std::fs::read_to_string(&abi_path)
-        .map_err(|e| format!("failed to read ABI file: {}", e))?)
+    Ok(std::fs::read_to_string(&abi_path).map_err(|e| format!("failed to read ABI file: {}", e))?)
 }
 
 pub async fn load_abi(abi_path: &str, config: &Config) -> Result<Abi, String> {
@@ -343,9 +363,7 @@ pub async fn load_file_with_url(url: &str, timeout: u64) -> Result<Vec<u8>, Stri
         .await
         .map_err(|e| format!("Failed to get response bytes: {e}"))?;
     Ok(res.to_vec())
-
 }
-
 
 pub async fn calc_acc_address(
     tvc: &[u8],
@@ -354,44 +372,41 @@ pub async fn calc_acc_address(
     init_data: Option<&str>,
     abi: Abi,
 ) -> Result<String, String> {
-
     let data_map_supported = abi.abi().unwrap().data_map_supported();
 
     let ton = create_client_local()?;
-    let dset=
-        if data_map_supported {
-            let init_data_json = init_data
-                .map(serde_json::from_str)
-                .transpose()
-                .map_err(|e| format!("initial data is not in json: {}", e))?;
+    let dset = if data_map_supported {
+        let init_data_json = init_data
+            .map(serde_json::from_str)
+            .transpose()
+            .map_err(|e| format!("initial data is not in json: {}", e))?;
 
-            DeploySet {
-                tvc: Some(base64::encode(tvc)),
-                workchain_id: Some(wc),
-                initial_data: init_data_json,
-                initial_pubkey: pubkey.clone(),
-                ..Default::default()
-            }
-        } else {
-            let init_data_json = insert_pubkey_to_init_data(pubkey.clone(), init_data)?;
-            let js = serde_json::from_str(init_data_json.as_str()).map_err(|e| format!("initial data is not in json: {}", e))?;
-            DeploySet {
-                tvc: Some(base64::encode(tvc)),
-                workchain_id: Some(wc),
-                initial_data: js,
-                initial_pubkey: None, // initial_pubkey: pubkey.clone(),
-                ..Default::default()
-            }
-        };
+        DeploySet {
+            tvc: Some(base64::encode(tvc)),
+            workchain_id: Some(wc),
+            initial_data: init_data_json,
+            initial_pubkey: pubkey.clone(),
+            ..Default::default()
+        }
+    } else {
+        let init_data_json = insert_pubkey_to_init_data(pubkey.clone(), init_data)?;
+        let js = serde_json::from_str(init_data_json.as_str())
+            .map_err(|e| format!("initial data is not in json: {}", e))?;
+        DeploySet {
+            tvc: Some(base64::encode(tvc)),
+            workchain_id: Some(wc),
+            initial_data: js,
+            initial_pubkey: None, // initial_pubkey: pubkey.clone(),
+            ..Default::default()
+        }
+    };
     let result = ton_client::abi::encode_message(
         ton.clone(),
         ParamsOfEncodeMessage {
             abi,
             deploy_set: Some(dset),
             signer: if pubkey.is_some() {
-                Signer::External {
-                    public_key: pubkey.unwrap(),
-                }
+                Signer::External { public_key: pubkey.unwrap() }
             } else {
                 Signer::None
             },
@@ -419,14 +434,20 @@ pub fn events_filter(addr: &str, since: u32) -> serde_json::Value {
     })
 }
 
-pub async fn print_message(ton: TonClient, message: &Value, abi: &str, is_internal: bool) -> Result<(String, String), String> {
+pub async fn print_message(
+    ton: TonClient,
+    message: &Value,
+    abi: &str,
+    is_internal: bool,
+) -> Result<(String, String), String> {
     println!("Id: {}", message["id"].as_str().unwrap_or("Undefined"));
     let value = message["value"].as_str().unwrap_or("0x0");
     let value = u64::from_str_radix(value.trim_start_matches("0x"), 16)
         .map_err(|e| format!("failed to decode msg value: {}", e))?;
     let value: f64 = value as f64 / 1e9;
     println!("Value: {:.9}", value);
-    println!("Created at: {} ({})",
+    println!(
+        "Created at: {} ({})",
         message["created_at"].as_u64().unwrap_or(0),
         message["created_at_string"].as_str().unwrap_or("Undefined")
     );
@@ -448,8 +469,11 @@ pub async fn print_message(ton: TonClient, message: &Value, abi: &str, is_intern
             ("unknown".to_owned(), "{}".to_owned())
         } else {
             let result = result.unwrap();
-            (result.name, serde_json::to_string(&result.value)
-                .map_err(|e| format!("failed to serialize the result: {}", e))?)
+            (
+                result.name,
+                serde_json::to_string(&result.value)
+                    .map_err(|e| format!("failed to serialize the result: {}", e))?,
+            )
         };
         println!("Decoded body:\n{} {}\n", name, args);
         return Ok((name, args));
@@ -468,7 +492,7 @@ pub fn json_account(
     code_hash: Option<String>,
     state_init: Option<String>,
 ) -> Value {
-    let mut res = json!({ });
+    let mut res = json!({});
     if acc_type.is_some() {
         res["acc_type"] = json!(acc_type.unwrap());
     }
@@ -495,7 +519,6 @@ pub fn json_account(
     }
     res
 }
-
 
 pub fn print_account(
     config: &Config,
@@ -552,22 +575,27 @@ pub fn print_account(
     }
 }
 
-pub fn construct_account_from_tvc(tvc_path: &str, address: Option<&str>, balance: Option<u64>) -> Result<Account, String> {
+pub fn construct_account_from_tvc(
+    tvc_path: &str,
+    address: Option<&str>,
+    balance: Option<u64>,
+) -> Result<Account, String> {
     Account::active_by_init_code_hash(
         match address {
             Some(address) => MsgAddressInt::from_str(address)
                 .map_err(|e| format!("Failed to set address: {}", e))?,
-            _ => MsgAddressInt::default()
+            _ => MsgAddressInt::default(),
         },
         match balance {
             Some(balance) => CurrencyCollection::with_grams(balance),
-            _ => CurrencyCollection::default()
+            _ => CurrencyCollection::default(),
         },
         0,
         StateInit::construct_from_file(tvc_path)
             .map_err(|e| format!(" failed to load TVC from the file {}: {}", tvc_path, e))?,
-        true
-    ).map_err(|e| format!(" failed to create account with the stateInit: {}",e))
+        true,
+    )
+    .map_err(|e| format!(" failed to create account with the stateInit: {}", e))
 }
 
 pub fn check_dir(path: &str) -> Result<(), String> {
@@ -589,35 +617,36 @@ pub async fn load_account(
     source_type: &AccountSource,
     source: &str,
     ton_client: Option<TonClient>,
-    config: &Config
+    config: &Config,
 ) -> Result<(Account, String), String> {
     match source_type {
         AccountSource::NETWORK => {
             let ton_client = match ton_client {
                 Some(ton_client) => ton_client,
-                None => {
-                    create_client(&config)?
-                }
+                None => create_client(&config)?,
             };
-            let boc = query_account_field(ton_client.clone(),source, "boc").await?;
-            Ok((Account::construct_from_base64(&boc)
-                .map_err(|e| format!("Failed to construct account: {}", e))?,
-                boc))
-        },
+            let boc = query_account_field(ton_client.clone(), source, "boc").await?;
+            Ok((
+                Account::construct_from_base64(&boc)
+                    .map_err(|e| format!("Failed to construct account: {}", e))?,
+                boc,
+            ))
+        }
         _ => {
             let account = if source_type == &AccountSource::BOC {
-                Account::construct_from_file(source)
-                    .map_err(|e| format!(" failed to load account from the file {}: {}", source, e))?
+                Account::construct_from_file(source).map_err(|e| {
+                    format!(" failed to load account from the file {}: {}", source, e)
+                })?
             } else {
                 construct_account_from_tvc(source, None, None)?
             };
-            let account_bytes = account.write_to_bytes()
+            let account_bytes = account
+                .write_to_bytes()
                 .map_err(|e| format!(" failed to load data from the account: {}", e))?;
             Ok((account, base64::encode(&account_bytes)))
-        },
+        }
     }
 }
-
 
 pub fn load_debug_info(abi: &str) -> Option<String> {
     check_file_exists(abi, &[".json", ".abi"], &[".dbg.json", ".debug.json", ".map.json"])
@@ -643,22 +672,25 @@ pub fn check_file_exists(path: &str, trim: &[&str], ending: &[&str]) -> Option<S
     None
 }
 
-pub fn abi_from_matches_or_config(matches: &ArgMatches<'_>, config: &Config) -> Result<String, String> {
-    matches.value_of("ABI")
+pub fn abi_from_matches_or_config(
+    matches: &ArgMatches<'_>,
+    config: &Config,
+) -> Result<String, String> {
+    matches
+        .value_of("ABI")
         .map(|s| s.to_string())
         .or(config.abi_path.clone())
         .ok_or("ABI file is not defined. Supply it in the config file or command line.".to_string())
 }
 
 pub fn parse_lifetime(lifetime: Option<&str>, config: &Config) -> Result<u32, String> {
-    Ok(lifetime.map(|val| {
-        u32::from_str_radix(val, 10)
-            .map_err(|e| format!("failed to parse lifetime: {}", e))
-    })
+    Ok(lifetime
+        .map(|val| {
+            u32::from_str_radix(val, 10).map_err(|e| format!("failed to parse lifetime: {}", e))
+        })
         .transpose()?
         .unwrap_or(config.lifetime))
 }
-
 
 #[macro_export]
 macro_rules! print_args {
@@ -684,7 +716,12 @@ pub fn load_params(params: &str) -> Result<String, String> {
     }
 }
 
-pub async fn unpack_alternative_params(matches: &ArgMatches<'_>, abi_path: &str, method: &str, config: &Config) -> Result<String, String> {
+pub async fn unpack_alternative_params(
+    matches: &ArgMatches<'_>,
+    abi_path: &str,
+    method: &str,
+    config: &Config,
+) -> Result<String, String> {
     if let Some(params) = matches.values_of("PARAMS") {
         let params = params.collect();
         parse_params(params, abi_path, method, config).await
@@ -693,8 +730,9 @@ pub async fn unpack_alternative_params(matches: &ArgMatches<'_>, abi_path: &str,
     }
 }
 
-pub fn wc_from_matches_or_config(matches: &ArgMatches<'_>, config: &Config) -> Result<i32 ,String> {
-    Ok(matches.value_of("WC")
+pub fn wc_from_matches_or_config(matches: &ArgMatches<'_>, config: &Config) -> Result<i32, String> {
+    Ok(matches
+        .value_of("WC")
         .map(|v| i32::from_str_radix(v, 10))
         .transpose()
         .map_err(|e| format!("failed to parse workchain id: {}", e))?
@@ -703,24 +741,31 @@ pub fn wc_from_matches_or_config(matches: &ArgMatches<'_>, config: &Config) -> R
 
 pub fn contract_data_from_matches_or_config_alias(
     matches: &ArgMatches<'_>,
-    full_config: &FullConfig
+    full_config: &FullConfig,
 ) -> Result<(Option<String>, Option<String>, Option<String>), String> {
-    let address = matches.value_of("ADDRESS")
+    let address = matches
+        .value_of("ADDRESS")
         .map(|s| s.to_string())
         .or(full_config.config.addr.clone())
-        .ok_or("ADDRESS is not defined. Supply it in the config file or command line.".to_string())?;
+        .ok_or(
+            "ADDRESS is not defined. Supply it in the config file or command line.".to_string(),
+        )?;
     let (address, abi, keys) = if full_config.aliases.contains_key(&address) {
         let alias = full_config.aliases.get(&address).unwrap();
         (alias.address.clone(), alias.abi_path.clone(), alias.key_path.clone())
     } else {
         (Some(address), None, None)
     };
-    let abi = matches.value_of("ABI")
+    let abi = matches
+        .value_of("ABI")
         .map(|s| s.to_string())
         .or(full_config.config.abi_path.clone())
         .or(abi)
-        .ok_or("ABI file is not defined. Supply it in the config file or command line.".to_string())?;
-    let keys = matches.value_of("KEYS")
+        .ok_or(
+            "ABI file is not defined. Supply it in the config file or command line.".to_string(),
+        )?;
+    let keys = matches
+        .value_of("KEYS")
         .map(|s| s.to_string())
         .or(full_config.config.keys_path.clone())
         .or(keys);
@@ -981,29 +1026,29 @@ pub fn blockchain_config_from_default_json() -> Result<BlockchainConfig, String>
         .map_err(|e| format!("Failed to construct default config: {e}"))
 }
 
-// loads blockchain config from the config contract boc, if it is none tries to load config contract
-// from the network, if it is unavailable returns default.
-pub async fn get_blockchain_config(cli_config: &Config, config_contract_boc_path: Option<&str>) ->
-    Result<BlockchainConfig, String> {
+// loads blockchain config from the config contract boc, if it is none tries to
+// load config contract from the network, if it is unavailable returns default.
+pub async fn get_blockchain_config(
+    cli_config: &Config,
+    config_contract_boc_path: Option<&str>,
+) -> Result<BlockchainConfig, String> {
     match config_contract_boc_path {
         Some(config_path) => {
-            let acc = Account::construct_from_file(config_path)
-                .map_err(|e| format!("Failed to load config contract account from file {config_path}: {e}"))?;
+            let acc = Account::construct_from_file(config_path).map_err(|e| {
+                format!("Failed to load config contract account from file {config_path}: {e}")
+            })?;
             construct_blockchain_config(&acc)
-        },
+        }
         None => {
             let ton_client = create_client(cli_config)?;
-            let config = query_account_field(
-                ton_client.clone(),
-                CONFIG_ADDR,
-                "boc",
-            ).await;
-            let config_account = config.and_then(|config|
+            let config = query_account_field(ton_client.clone(), CONFIG_ADDR, "boc").await;
+            let config_account = config.and_then(|config| {
                 Account::construct_from_base64(&config)
-                    .map_err(|e| format!("Failed to construct config account: {e}")));
+                    .map_err(|e| format!("Failed to construct config account: {e}"))
+            });
             match config_account {
                 Ok(config) => construct_blockchain_config(&config),
-                Err(_) => blockchain_config_from_default_json()
+                Err(_) => blockchain_config_from_default_json(),
             }
         }
     }
@@ -1019,10 +1064,13 @@ pub fn decode_data(data: &str, param_name: &str) -> Result<Vec<u8>, String> {
     }
 }
 
-pub fn insert_pubkey_to_init_data(pubkey: Option<String>, opt_init_data: Option<&str>) -> Result<String, String> {
+pub fn insert_pubkey_to_init_data(
+    pubkey: Option<String>,
+    opt_init_data: Option<&str>,
+) -> Result<String, String> {
     let init_data = match opt_init_data {
         Some(json) => json,
-        None => "{}"
+        None => "{}",
     };
 
     let mut js_init_data = serde_json::from_str(init_data)
@@ -1030,14 +1078,14 @@ pub fn insert_pubkey_to_init_data(pubkey: Option<String>, opt_init_data: Option<
     match &mut js_init_data {
         Value::Object(obj) => {
             if obj.contains_key(&"_pubkey".to_string()) {
-                return Err("Public key was set via init data. Please, use command line options --genkey/--setkey to set public key.".to_owned())
+                return Err("Public key was set via init data. Please, use command line options --genkey/--setkey to set public key.".to_owned());
             }
             if let Some(pk) = pubkey {
                 let pubkey_str = format!("0x{}", pk);
                 obj.insert("_pubkey".to_string(), Value::String(pubkey_str));
             }
         }
-        _ => panic!("js_init_data is not Value::Object")
+        _ => panic!("js_init_data is not Value::Object"),
     }
 
     Ok(js_init_data.to_string())

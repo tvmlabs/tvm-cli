@@ -1,10 +1,15 @@
-use crate::debot::term_browser::terminal_input;
-use serde_json::{Value, json};
+use serde_json::json;
+use serde_json::Value;
 use ton_client::abi::Abi;
-use ton_client::debot::{DebotInterface, InterfaceResult};
-use super::dinterface::{decode_answer_id, decode_num_arg, decode_prompt};
+use ton_client::debot::DebotInterface;
+use ton_client::debot::InterfaceResult;
 use ton_client::encoding::decode_abi_number;
+
+use super::dinterface::decode_answer_id;
+use super::dinterface::decode_num_arg;
+use super::dinterface::decode_prompt;
 use crate::convert;
+use crate::debot::term_browser::terminal_input;
 
 const ID: &str = "a1d347099e29c1624c8890619daf207bde18e92df5220a54bcc6d858309ece84";
 
@@ -55,6 +60,7 @@ impl AmountInput {
     pub fn new() -> Self {
         Self {}
     }
+
     fn get(&self, args: &Value) -> InterfaceResult {
         let answer_id = decode_answer_id(args)?;
         let prompt = decode_prompt(args)?;
@@ -103,7 +109,7 @@ impl DebotInterface for AmountInput {
     }
 }
 
-fn format_amount(amount: u128, decimals: usize) ->  String {
+fn format_amount(amount: u128, decimals: usize) -> String {
     if decimals == 0 {
         format!("{}", amount)
     } else {

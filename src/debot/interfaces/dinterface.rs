@@ -1,21 +1,30 @@
-use super::echo::Echo;
-use super::stdout::Stdout;
-use super::{
-    AddressInput, AmountInput, ConfirmInput, Menu, NumberInput, SigningBoxInput,
-    EncryptionBoxInput, Terminal, UserInfo, InputInterface
-};
-use crate::config::Config;
-use crate::debot::ChainProcessor;
-use crate::helpers::TonClient;
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use num_bigint::BigInt;
 use num_traits::cast::NumCast;
 use serde_json::Value;
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
+use ton_client::debot::DebotInterface;
+use ton_client::debot::DebotInterfaceExecutor;
+use ton_client::encoding::decode_abi_bigint;
+use ton_client::encoding::decode_abi_number;
 
-use ton_client::debot::{DebotInterface, DebotInterfaceExecutor};
-use ton_client::encoding::{decode_abi_bigint, decode_abi_number};
+use super::echo::Echo;
+use super::stdout::Stdout;
+use super::AddressInput;
+use super::AmountInput;
+use super::ConfirmInput;
+use super::EncryptionBoxInput;
+use super::InputInterface;
+use super::Menu;
+use super::NumberInput;
+use super::SigningBoxInput;
+use super::Terminal;
+use super::UserInfo;
+use crate::config::Config;
+use crate::debot::ChainProcessor;
+use crate::helpers::TonClient;
 
 pub struct SupportedInterfaces {
     client: TonClient,
@@ -27,6 +36,7 @@ impl DebotInterfaceExecutor for SupportedInterfaces {
     fn get_interfaces(&self) -> &HashMap<String, Arc<dyn DebotInterface + Send + Sync>> {
         &self.interfaces
     }
+
     fn get_client(&self) -> TonClient {
         self.client.clone()
     }
@@ -51,7 +61,8 @@ impl SupportedInterfaces {
 
         let iw = InterfaceWrapper { processor: processor.clone() };
 
-        let iface: Arc<dyn DebotInterface + Send + Sync> = iw.wrap(Arc::new(AddressInput::new(config.clone())));
+        let iface: Arc<dyn DebotInterface + Send + Sync> =
+            iw.wrap(Arc::new(AddressInput::new(config.clone())));
         interfaces.insert(iface.get_id(), iface);
 
         let iface: Arc<dyn DebotInterface + Send + Sync> = iw.wrap(Arc::new(AmountInput::new()));
@@ -69,22 +80,19 @@ impl SupportedInterfaces {
         let iface: Arc<dyn DebotInterface + Send + Sync> = Arc::new(Echo::new());
         interfaces.insert(iface.get_id(), iface);
 
-        let iface: Arc<dyn DebotInterface + Send + Sync> = iw.wrap(
-            Arc::new(Terminal::new(Printer {processor}))
-        );
+        let iface: Arc<dyn DebotInterface + Send + Sync> =
+            iw.wrap(Arc::new(Terminal::new(Printer { processor })));
         interfaces.insert(iface.get_id(), iface);
 
         let iface: Arc<dyn DebotInterface + Send + Sync> = iw.wrap(Arc::new(Menu::new()));
         interfaces.insert(iface.get_id(), iface);
 
-        let iface: Arc<dyn DebotInterface + Send + Sync> = Arc::new(
-            SigningBoxInput::new(client.clone(), iw.processor.clone())
-        );
+        let iface: Arc<dyn DebotInterface + Send + Sync> =
+            Arc::new(SigningBoxInput::new(client.clone(), iw.processor.clone()));
         interfaces.insert(iface.get_id(), iface);
 
-        let iface: Arc<dyn DebotInterface + Send + Sync> = iw.wrap(
-            Arc::new(UserInfo::new(client.clone(), config.clone()))
-        );
+        let iface: Arc<dyn DebotInterface + Send + Sync> =
+            iw.wrap(Arc::new(UserInfo::new(client.clone(), config.clone())));
         interfaces.insert(iface.get_id(), iface);
 
         let iface: Arc<dyn DebotInterface + Send + Sync> =
@@ -107,25 +115,18 @@ impl Printer {
 
 pub fn decode_answer_id(args: &Value) -> Result<u32, String> {
     u32::from_str_radix(
-        args["answerId"]
-            .as_str()
-            .ok_or("answer id not found in argument list".to_string())?,
+        args["answerId"].as_str().ok_or("answer id not found in argument list".to_string())?,
         10,
     )
     .map_err(|e| format!("{}", e))
 }
 
 pub fn decode_arg(args: &Value, name: &str) -> Result<String, String> {
-    args[name]
-        .as_str()
-        .ok_or(format!("\"{}\" not found", name))
-        .map(|x| x.to_string())
+    args[name].as_str().ok_or(format!("\"{}\" not found", name)).map(|x| x.to_string())
 }
 
 pub fn decode_bool_arg(args: &Value, name: &str) -> Result<bool, String> {
-    args[name]
-        .as_bool()
-        .ok_or(format!("\"{}\" not found", name))
+    args[name].as_bool().ok_or(format!("\"{}\" not found", name))
 }
 
 pub fn decode_string_arg(args: &Value, name: &str) -> Result<String, String> {
@@ -159,9 +160,7 @@ pub fn decode_array<F, T>(args: &Value, name: &str, validator: F) -> Result<Vec<
 where
     F: Fn(&Value) -> Option<T>,
 {
-    let array = args[name]
-        .as_array()
-        .ok_or(format!("\"{}\" is invalid: must be array", name))?;
+    let array = args[name].as_array().ok_or(format!("\"{}\" is invalid: must be array", name))?;
     let mut strings = vec![];
     for elem in array {
         strings.push(validator(elem).ok_or("invalid array element type".to_string())?);

@@ -1,29 +1,37 @@
-/*
- * Copyright 2018-2023 EverX.
- *
- * Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
- * this file except in compliance with the License.
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific TON DEV software governing permissions and
- * limitations under the License.
- */
+// Copyright 2018-2023 EverX.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 extern crate reqwest;
+use clap::App;
+use clap::AppSettings;
+use clap::Arg;
+use clap::ArgMatches;
+use clap::SubCommand;
+use serde_json::json;
+use ton_client::abi::encode_message_body;
+use ton_client::abi::Abi;
+use ton_client::abi::AbiContract;
+use ton_client::abi::AbiParam;
+use ton_client::abi::CallSet;
+use ton_client::abi::ParamsOfEncodeMessageBody;
+
 use crate::call;
 use crate::config::Config;
 use crate::convert;
 use crate::crypto::load_keypair;
 use crate::deploy::prepare_deploy_message_params;
-use crate::helpers::{
-    create_client_local, create_client_verbose, load_file_with_url, load_ton_address, now_ms,
-};
-use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
-use serde_json::json;
-use ton_client::abi::{
-    encode_message_body, Abi, AbiContract, AbiParam, CallSet, ParamsOfEncodeMessageBody,
-};
+use crate::helpers::create_client_local;
+use crate::helpers::create_client_verbose;
+use crate::helpers::load_file_with_url;
+use crate::helpers::load_ton_address;
+use crate::helpers::now_ms;
 
 const SAFEMULTISIG_LINK: &str = "https://github.com/tonlabs/ton-labs-contracts/blob/master/solidity/safemultisig/SafeMultisigWallet.tvc?raw=true";
 const SETCODEMULTISIG_LINK: &str = "https://github.com/tonlabs/ton-labs-contracts/blob/master/solidity/setcodemultisig/SetcodeMultisigWallet.tvc?raw=true";
@@ -201,9 +209,8 @@ impl CallArgs {
             .value_of("DEST")
             .map(|s| s.to_owned())
             .ok_or("--dst parameter is not defined".to_string())?;
-        let value = matches
-            .value_of("VALUE")
-            .ok_or("--value parameter is not defined".to_string())?;
+        let value =
+            matches.value_of("VALUE").ok_or("--value parameter is not defined".to_string())?;
         let value = convert::convert_token(value)?;
         let comment = matches.value_of("PURPOSE").map(|s| s.to_owned());
         let body = if let Some(ref txt) = comment {
@@ -233,11 +240,7 @@ impl CallArgs {
             "payload": payload,
         });
 
-        Ok(Self {
-            params,
-            func_name: "submitTransaction".to_owned(),
-            ..Default::default()
-        })
+        Ok(Self { params, func_name: "submitTransaction".to_owned(), ..Default::default() })
     }
 
     pub async fn deploy(matches: &ArgMatches<'_>) -> Result<Self, String> {
@@ -245,17 +248,9 @@ impl CallArgs {
         let v2 = matches.is_present("V2");
 
         let target = if v2 {
-            if is_setcode {
-                SETCODEMULTISIG_V2_LINK
-            } else {
-                SAFEMULTISIG_V2_LINK
-            }
+            if is_setcode { SETCODEMULTISIG_V2_LINK } else { SAFEMULTISIG_V2_LINK }
         } else {
-            if is_setcode {
-                SETCODEMULTISIG_LINK
-            } else {
-                SAFEMULTISIG_LINK
-            }
+            if is_setcode { SETCODEMULTISIG_LINK } else { SAFEMULTISIG_LINK }
         };
 
         let image = load_file_with_url(target, 30000).await?;
@@ -286,11 +281,7 @@ impl CallArgs {
             params["lifetime"] = json!(lifetime);
         }
 
-        Ok(Self {
-            params,
-            func_name: "constructor".to_owned(),
-            image: Some(image),
-        })
+        Ok(Self { params, func_name: "constructor".to_owned(), image: Some(image) })
     }
 }
 
@@ -324,16 +315,12 @@ impl MultisigArgs {
         let mut abi = serde_json::from_str::<AbiContract>(MSIG_ABI).unwrap_or_default();
         if v2 {
             abi.version = Some("2.3".to_owned());
-            if let Some(f) = abi
-                .functions
-                .iter_mut()
-                .find(|e| &e.name == "submitTransaction")
-            {
+            if let Some(f) = abi.functions.iter_mut().find(|e| &e.name == "submitTransaction") {
                 f.inputs.push(AbiParam {
                     name: "stateInit".to_owned(),
                     param_type: "optional(cell)".to_owned(),
                     components: vec![],
-                    init: false
+                    init: false,
                 });
             }
             if let Some(f) = abi.functions.iter_mut().find(|e| &e.name == "constructor") {
@@ -341,27 +328,26 @@ impl MultisigArgs {
                     name: "lifetime".to_owned(),
                     param_type: "uint32".to_owned(),
                     components: vec![],
-                    init: false
+                    init: false,
                 });
             }
         }
 
-        Ok(Self {
-            addr,
-            call_args,
-            abi: Abi::Contract(abi),
-            keys,
-        })
+        Ok(Self { addr, call_args, abi: Abi::Contract(abi), keys })
     }
+
     pub fn address(&self) -> &str {
         &self.addr
     }
+
     pub fn params(&self) -> &serde_json::Value {
         &self.call_args.params
     }
+
     pub fn abi(&self) -> &Abi {
         &self.abi
     }
+
     pub fn abi_string(&self) -> String {
         if let Abi::Contract(ref abi) = self.abi {
             serde_json::to_string(abi).unwrap()
@@ -369,15 +355,19 @@ impl MultisigArgs {
             unreachable!();
         }
     }
+
     pub fn func_name(&self) -> &str {
         &self.call_args.func_name
     }
+
     pub fn keys(&self) -> &str {
         &self.keys
     }
+
     pub fn image(&self) -> Option<&[u8]> {
         self.call_args.image.as_ref().map(|v| v.as_slice())
     }
+
     pub async fn execute(self, config: &Config) -> Result<serde_json::Value, String> {
         call::call_contract_with_result(
             config,
@@ -547,22 +537,19 @@ async fn multisig_deploy_command(matches: &ArgMatches<'_>, config: &Config) -> R
         .await?;
     }
 
-    let res = call::process_message(ton.clone(), msg, config)
-        .await
-        .map_err(|e| format!("{:#}", e));
+    let res = call::process_message(ton.clone(), msg, config).await.map_err(|e| format!("{:#}", e));
 
     if res.is_err() {
-        if res
-            .clone()
-            .err()
-            .unwrap()
-            .contains("Account does not exist.")
-        {
+        if res.clone().err().unwrap().contains("Account does not exist.") {
             if !config.is_json {
-                println!("Your account should have initial balance for deployment. Please transfer some value to your wallet address before deploy.");
+                println!(
+                    "Your account should have initial balance for deployment. Please transfer some value to your wallet address before deploy."
+                );
             } else {
                 println!("{{");
-                println!("  \"Error\": \"Your account should have initial balance for deployment. Please transfer some value to your wallet address before deploy.\",");
+                println!(
+                    "  \"Error\": \"Your account should have initial balance for deployment. Please transfer some value to your wallet address before deploy.\","
+                );
                 println!("  \"Address\": \"{}\"", address);
                 println!("}}");
             }

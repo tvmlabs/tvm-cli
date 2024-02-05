@@ -1,10 +1,19 @@
+use std::io::BufRead;
+use std::io::BufReader;
+use std::io::Read;
+use std::io::Write;
+use std::io::{self};
+
+use ton_client::crypto::get_signing_box;
+use ton_client::crypto::remove_signing_box;
+use ton_client::crypto::KeyPair;
+use ton_client::crypto::RegisteredSigningBox;
+use ton_client::crypto::SigningBoxHandle;
+
 use super::term_browser::input;
 use crate::crypto::load_keypair;
-use crate::helpers::{read_keys, TonClient};
-use std::io::{self, BufRead, Write, Read, BufReader};
-use ton_client::crypto::{
-    get_signing_box, remove_signing_box, KeyPair, RegisteredSigningBox, SigningBoxHandle,
-};
+use crate::helpers::read_keys;
+use crate::helpers::TonClient;
 
 pub(super) struct TerminalSigningBox {
     handle: SigningBoxHandle,
@@ -12,8 +21,11 @@ pub(super) struct TerminalSigningBox {
 }
 
 impl TerminalSigningBox {
-    pub async fn new<R: Read>(client: TonClient, possible_keys: Vec<String>, reader: Option<BufReader<R>>) -> Result<Self, String>
-    {
+    pub async fn new<R: Read>(
+        client: TonClient,
+        possible_keys: Vec<String>,
+        reader: Option<BufReader<R>>,
+    ) -> Result<Self, String> {
         let keys = {
             if let Some(mut reader) = reader {
                 let mut writer = io::stdout();
@@ -59,9 +71,7 @@ impl Drop for TerminalSigningBox {
         if self.handle.0 != 0 {
             let _ = remove_signing_box(
                 self.client.clone(),
-                RegisteredSigningBox {
-                    handle: self.handle.clone(),
-                },
+                RegisteredSigningBox { handle: self.handle.clone() },
             );
         }
     }
@@ -81,9 +91,7 @@ where
     let enter_str = prompt.unwrap_or_default();
     let mut pair = Err("no keypair".to_string());
     let mut format_pubkeys = String::new();
-    possible_keys
-        .iter()
-        .for_each(|x| format_pubkeys += &format!(" {},", x));
+    possible_keys.iter().for_each(|x| format_pubkeys += &format!(" {},", x));
     for _ in 0..tries {
         let value = input(enter_str, reader, writer);
         pair = load_keypair(&value).map_err(|e| {
@@ -92,10 +100,7 @@ where
         });
         if let Ok(ref keys) = pair {
             if !possible_keys.is_empty() {
-                if !possible_keys
-                    .iter()
-                    .any(|x| x.get(2..).unwrap() == keys.public.as_str())
-                {
+                if !possible_keys.iter().any(|x| x.get(2..).unwrap() == keys.public.as_str()) {
                     println!("Unexpected keys.");
                     println!(
                         "Hint: enter keypair which contains one of the following public keys: {}",
@@ -114,12 +119,12 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs::File;
 
+    use super::*;
+
     const PUBLIC: &str = "9711a04f0b19474272bc7bae5472a8fbbb6ef71ce9c193f5ec3f5af808069a41";
-    const PRIVATE: &str =
-        "cdf2a820517fa783b9b6094d15e650af92d485084ab217fc2c859f02d49623f3";
+    const PRIVATE: &str = "cdf2a820517fa783b9b6094d15e650af92d485084ab217fc2c859f02d49623f3";
     const SEED: &str =
         "episode polar pistol excite essence van cover fox visual gown yellow minute";
     const KEYS_FILE: &str = "./keys.json";

@@ -1,9 +1,15 @@
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::default::Default;
 
-fn default_init_method() -> String { "start".to_string() }
-fn default_mandatory() -> bool { false }
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::Value;
+
+fn default_init_method() -> String {
+    "start".to_string()
+}
+fn default_mandatory() -> bool {
+    false
+}
 
 #[derive(Deserialize, Clone, PartialEq)]
 pub enum ApproveKind {
@@ -29,11 +35,7 @@ pub struct PipeChain {
 
 impl PipeChain {
     pub fn new() -> Self {
-        Self {
-            init_method: default_init_method(),
-            quiet: false,
-            ..Self::default()
-        }
+        Self { init_method: default_init_method(), quiet: false, ..Self::default() }
     }
 }
 
@@ -53,6 +55,6 @@ pub enum ChainLink {
         ifeq: Option<String>,
     },
     SigningBox {
-        handle: u32
+        handle: u32,
     },
 }

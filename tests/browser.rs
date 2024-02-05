@@ -1,12 +1,16 @@
 use std::thread::sleep;
 use std::time::Duration;
+
 use assert_cmd::Command;
 use predicates::prelude::*;
 // uncomment for debug
 // use std::io::Write;
 use serde_json::json;
 mod common;
-use common::{BIN_NAME, NETWORK, giver_v2, grep_address};
+use common::giver_v2;
+use common::grep_address;
+use common::BIN_NAME;
+use common::NETWORK;
 
 fn get_debot_paths(name: &str) -> (String, String, String) {
     (
@@ -20,11 +24,7 @@ fn deploy_debot(name: &str) -> Result<String, Box<dyn std::error::Error>> {
     let (tvc, abi, keys) = get_debot_paths(name);
 
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
-    cmd.arg("config")
-        .arg("--url")
-        .arg(&*NETWORK)
-        .arg("--wc")
-        .arg("0");
+    cmd.arg("config").arg("--url").arg(&*NETWORK).arg("--wc").arg("0");
     cmd.assert().success();
 
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
@@ -41,13 +41,7 @@ fn deploy_debot(name: &str) -> Result<String, Box<dyn std::error::Error>> {
     giver_v2(&addr);
     sleep(Duration::new(1, 0));
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
-    cmd.arg("deploy")
-        .arg(&tvc)
-        .arg("{}")
-        .arg("--abi")
-        .arg(&abi)
-        .arg("--sign")
-        .arg(&keys);
+    cmd.arg("deploy").arg(&tvc).arg("{}").arg("--abi").arg(&abi).arg("--sign").arg(&keys);
     cmd.assert()
         .success()
         .stdout(predicate::str::contains(&addr))
@@ -64,8 +58,7 @@ fn deploy_debot(name: &str) -> Result<String, Box<dyn std::error::Error>> {
         .arg(&addr)
         .arg("setABI")
         .arg(format!(r#"{{"dabi":"{}"}}"#, hex::encode(abi_string)));
-    cmd.assert()
-        .success();
+    cmd.assert().success();
 
     Ok(addr)
 }
@@ -100,13 +93,8 @@ fn test_userinfo() -> Result<(), Box<dyn std::error::Error>> {
     let wallet = format!("0:{:064}", 1);
     let key = format!("0x{:064}", 2);
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
-    cmd.arg("config")
-        .arg("--wallet")
-        .arg(&wallet)
-        .arg("--pubkey")
-        .arg(&key);
-    cmd.assert()
-        .success();
+    cmd.arg("config").arg("--wallet").arg(&wallet).arg("--pubkey").arg(&key);
+    cmd.assert().success();
 
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
     cmd.arg("call")
@@ -117,8 +105,7 @@ fn test_userinfo() -> Result<(), Box<dyn std::error::Error>> {
         .arg(&addr)
         .arg("setParams")
         .arg(format!(r#"{{"wallet":"{}","key":"{}"}}"#, wallet, key));
-    cmd.assert()
-        .success();
+    cmd.assert().success();
 
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
     cmd.timeout(std::time::Duration::from_secs(2))
@@ -154,9 +141,7 @@ fn test_pipechain_inputs() -> Result<(), Box<dyn std::error::Error>> {
         .arg(&addr)
         .arg("--pipechain")
         .arg(path_to_pipechain_tmp);
-    let assert = cmd
-        .assert()
-        .success();
+    let assert = cmd.assert().success();
 
     let _ = std::fs::remove_file(path_to_pipechain_tmp)?;
 
@@ -202,7 +187,10 @@ fn test_address_input() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
     cmd.timeout(std::time::Duration::from_secs(2))
-        .write_stdin(format!("y\n{}", "0:ea5be6a13f20fcdfddc2c2b0d317dfeab56718249b090767e5940137b7af89f1"))
+        .write_stdin(format!(
+            "y\n{}",
+            "0:ea5be6a13f20fcdfddc2c2b0d317dfeab56718249b090767e5940137b7af89f1"
+        ))
         .arg("debot")
         .arg("fetch")
         .arg(&addr);
@@ -297,8 +285,7 @@ fn test_pipechain_signing() -> Result<(), Box<dyn std::error::Error>> {
     val["debotAddress"] = json!(addr);
 
     let mut cmd = Command::cargo_bin(BIN_NAME)?;
-    cmd
-        .arg("-j")
+    cmd.arg("-j")
         .arg("debot")
         .arg("start")
         .arg(&addr)
@@ -306,9 +293,6 @@ fn test_pipechain_signing() -> Result<(), Box<dyn std::error::Error>> {
         .arg(path_to_pipechain)
         .arg("--signkey")
         .arg(keys);
-    let _assert = cmd
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("Debot error").count(0));
+    let _assert = cmd.assert().success().stdout(predicate::str::contains("Debot error").count(0));
     Ok(())
 }

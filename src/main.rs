@@ -1,15 +1,13 @@
-/*
- * Copyright 2018-2023 EverX.
- *
- * Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
- * this file except in compliance with the License.
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific TON DEV software governing permissions and
- * limitations under the License.
- */
+// Copyright 2018-2023 EverX.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
 #![allow(clippy::from_str_radix_10)]
 #![allow(clippy::or_fun_call)]
@@ -17,63 +15,103 @@
 
 mod account;
 mod call;
+#[cfg(feature = "sold")]
+mod compile;
 mod config;
 mod convert;
 mod crypto;
-mod decode;
 mod debot;
+mod debug;
+mod decode;
 mod deploy;
 mod depool;
 mod depool_abi;
 mod genaddr;
 mod getconfig;
 mod helpers;
-mod multisig;
-mod sendfile;
-mod voting;
-mod replay;
-mod debug;
-mod run;
-mod test;
 mod message;
-#[cfg(feature = "sold")]
-mod compile;
+mod multisig;
+mod replay;
+mod run;
+mod sendfile;
+mod test;
+mod voting;
 
-use account::{get_account, calc_storage, wait_for_change};
-use call::{call_contract, call_contract_with_msg};
-use clap::{ArgMatches, SubCommand, Arg, AppSettings, App};
-use config::{Config, set_config, clear_config};
-use crypto::{generate_mnemonic, extract_pubkey, generate_keypair};
-use debot::{create_debot_command, debot_command};
-use decode::{create_decode_command, decode_command};
-use debug::{create_debug_command, debug_command};
-use deploy::{deploy_contract, generate_deploy_message};
-use depool::{create_depool_command, depool_command};
-use genaddr::generate_address;
-use getconfig::{query_global_config, dump_blockchain_config};
-use helpers::{load_ton_address, load_abi, create_client_local, query_raw,
-              contract_data_from_matches_or_config_alias};
-use multisig::{create_multisig_command, multisig_command};
-use replay::{fetch_block_command, fetch_command, replay_command};
-use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::env;
 use std::process::exit;
-use test::{create_test_command, test_command, test_sign_command, create_test_sign_command};
-use ton_client::abi::{ParamsOfEncodeMessageBody, CallSet};
-use voting::{create_proposal, decode_proposal, vote};
+
+use account::calc_storage;
+use account::get_account;
+use account::wait_for_change;
+use call::call_contract;
+use call::call_contract_with_msg;
+use clap::App;
+use clap::AppSettings;
+use clap::Arg;
+use clap::ArgMatches;
+use clap::SubCommand;
+use config::clear_config;
+use config::set_config;
+use config::Config;
+use crypto::extract_pubkey;
+use crypto::generate_keypair;
+use crypto::generate_mnemonic;
+use debot::create_debot_command;
+use debot::debot_command;
+use debug::create_debug_command;
+use debug::debug_command;
+use decode::create_decode_command;
+use decode::decode_command;
+use deploy::deploy_contract;
+use deploy::generate_deploy_message;
+use depool::create_depool_command;
+use depool::depool_command;
+use genaddr::generate_address;
+use getconfig::dump_blockchain_config;
+use getconfig::query_global_config;
+use helpers::contract_data_from_matches_or_config_alias;
+use helpers::create_client_local;
+use helpers::load_abi;
+use helpers::load_ton_address;
+use helpers::query_raw;
+use multisig::create_multisig_command;
+use multisig::multisig_command;
+use replay::fetch_block_command;
+use replay::fetch_command;
+use replay::replay_command;
+use serde_json::json;
+use serde_json::Value;
+use test::create_test_command;
+use test::create_test_sign_command;
+use test::test_command;
+use test::test_sign_command;
+use ton_client::abi::CallSet;
+use ton_client::abi::ParamsOfEncodeMessageBody;
+use voting::create_proposal;
+use voting::decode_proposal;
+use voting::vote;
+
 use crate::account::dump_accounts;
 #[cfg(feature = "sold")]
-use crate::compile::{compile_command, create_compile_command};
-
-use crate::config::{FullConfig, resolve_net_name};
+use crate::compile::compile_command;
+#[cfg(feature = "sold")]
+use crate::compile::create_compile_command;
+use crate::config::resolve_net_name;
+use crate::config::FullConfig;
 use crate::getconfig::gen_update_config_message;
-use crate::helpers::{abi_from_matches_or_config, AccountSource, default_config_name,
-    global_config_path, load_abi_from_tvc, load_params, parse_lifetime,
-    unpack_alternative_params, wc_from_matches_or_config
-};
+use crate::helpers::abi_from_matches_or_config;
+use crate::helpers::default_config_name;
+use crate::helpers::global_config_path;
+use crate::helpers::load_abi_from_tvc;
+use crate::helpers::load_params;
+use crate::helpers::parse_lifetime;
+use crate::helpers::unpack_alternative_params;
+use crate::helpers::wc_from_matches_or_config;
+use crate::helpers::AccountSource;
 use crate::message::generate_message;
-use crate::run::{run_command, run_get_method};
+use crate::run::run_command;
+use crate::run::run_get_method;
 
 const DEF_MSG_LIFETIME: u32 = 30;
 const DEF_STORAGE_PERIOD: u32 = 60 * 60 * 24 * 365;
@@ -98,12 +136,14 @@ fn main() {
         .expect("Can't create Engine tokio runtime");
     let result = runtime.block_on(async move { main_internal().await });
     if let Err(err_str) = result {
-        if !err_str.is_empty() { println!("{}", err_str); }
+        if !err_str.is_empty() {
+            println!("{}", err_str);
+        }
         exit(1)
     }
 }
 
-async fn main_internal() -> Result <(), String> {
+async fn main_internal() -> Result<(), String> {
     let version_string = env!("CARGO_PKG_VERSION");
 
     let abi_arg = Arg::with_name("ABI")
@@ -181,9 +221,9 @@ async fn main_internal() -> Result <(), String> {
         .arg(alias_arg_long.clone())
         .arg(multi_params_arg.clone());
 
-    let address_boc_tvc_arg = Arg::with_name("ADDRESS")
-        .takes_value(true)
-        .help("Contract address or path to the saved account state if --boc or --tvc flag is specified.");
+    let address_boc_tvc_arg = Arg::with_name("ADDRESS").takes_value(true).help(
+        "Contract address or path to the saved account state if --boc or --tvc flag is specified.",
+    );
 
     let method_arg = Arg::with_name("METHOD")
         .required(true)
@@ -213,8 +253,7 @@ async fn main_internal() -> Result <(), String> {
         .setting(AppSettings::AllowLeadingHyphen)
         .setting(AppSettings::TrailingVarArg)
         .setting(AppSettings::DontCollapseArgsInUsage)
-        .arg(address_boc_tvc_arg.clone()
-            .long("--addr"))
+        .arg(address_boc_tvc_arg.clone().long("--addr"))
         .arg(abi_arg.clone())
         .arg(method_opt_arg.clone())
         .arg(multi_params_arg.clone())
@@ -240,26 +279,29 @@ async fn main_internal() -> Result <(), String> {
         .arg(tvc_flag.clone())
         .arg(bc_config_arg.clone());
 
-    let version_cmd = SubCommand::with_name("version")
-        .about("Prints build and version info.");
+    let version_cmd = SubCommand::with_name("version").about("Prints build and version info.");
 
     let genphrase_cmd = SubCommand::with_name("genphrase")
         .about("Generates a seed phrase for keypair.")
         .version(version_string)
         .author(author)
-        .arg(Arg::with_name("DUMP_KEYPAIR")
-            .long("--dump")
-            .takes_value(true)
-            .help("Path where to dump keypair generated from the phrase"));
+        .arg(
+            Arg::with_name("DUMP_KEYPAIR")
+                .long("--dump")
+                .takes_value(true)
+                .help("Path where to dump keypair generated from the phrase"),
+        );
 
     let genpubkey_cmd = SubCommand::with_name("genpubkey")
         .about("Generates a public key from the seed phrase.")
         .version(version_string)
         .author(author)
-        .arg(Arg::with_name("PHRASE")
-            .takes_value(true)
-            .required(true)
-            .help("Seed phrase (12 words). Should be specified in quotes."));
+        .arg(
+            Arg::with_name("PHRASE")
+                .takes_value(true)
+                .required(true)
+                .help("Seed phrase (12 words). Should be specified in quotes."),
+        );
 
     let getkeypair_cmd = SubCommand::with_name("getkeypair")
         .about("Generates a keypair from the seed phrase or private key and saves it to the file.")
@@ -309,10 +351,9 @@ async fn main_internal() -> Result <(), String> {
         .version(version_string)
         .author(author)
         .arg(tvc_arg.clone())
-        .arg(Arg::with_name("PARAMS")
-            .required(true)
-            .takes_value(true)
-            .help("Constructor arguments. Can be specified with a filename, which contains json data."))
+        .arg(Arg::with_name("PARAMS").required(true).takes_value(true).help(
+            "Constructor arguments. Can be specified with a filename, which contains json data.",
+        ))
         .arg(abi_arg.clone())
         .arg(sign_arg.clone())
         .arg(keys_arg.clone())
@@ -324,21 +365,17 @@ async fn main_internal() -> Result <(), String> {
         .takes_value(true)
         .help("Path to the file where to store the message.");
 
-    let raw_arg = Arg::with_name("RAW")
-        .long("--raw")
-        .help("Creates raw message boc.");
+    let raw_arg = Arg::with_name("RAW").long("--raw").help("Creates raw message boc.");
 
-    let deploy_message_cmd = deploy_cmd.clone()
+    let deploy_message_cmd = deploy_cmd
+        .clone()
         .name("deploy_message")
         .about("Generates a signed message to deploy a smart contract to the blockchain.")
         .arg(output_arg.clone())
         .arg(raw_arg.clone());
 
-    let address_arg = Arg::with_name("ADDRESS")
-        .required(true)
-        .takes_value(true)
-        .help("Contract address.");
-
+    let address_arg =
+        Arg::with_name("ADDRESS").required(true).takes_value(true).help("Contract address.");
 
     let params_arg = Arg::with_name("PARAMS")
         .required(true)
@@ -361,10 +398,12 @@ async fn main_internal() -> Result <(), String> {
         .about("Sends a prepared message to the contract.")
         .version(version_string)
         .author(author)
-        .arg(Arg::with_name("MESSAGE")
-            .required(true)
-            .takes_value(true)
-            .help("Message to send. Message data should be specified in quotes."))
+        .arg(
+            Arg::with_name("MESSAGE")
+                .required(true)
+                .takes_value(true)
+                .help("Message to send. Message data should be specified in quotes."),
+        )
         .arg(abi_arg.clone());
 
     let message_cmd = SubCommand::with_name("message")
@@ -378,14 +417,18 @@ async fn main_internal() -> Result <(), String> {
         .arg(abi_arg.clone())
         .arg(keys_arg.clone())
         .arg(sign_arg.clone())
-        .arg(Arg::with_name("LIFETIME")
-            .long("--lifetime")
-            .takes_value(true)
-            .help("Period of time in seconds while message is valid."))
-        .arg(Arg::with_name("TIMESTAMP")
-            .long("--time")
-            .takes_value(true)
-            .help("Message creation time in milliseconds. If not specified, `now` is used."))
+        .arg(
+            Arg::with_name("LIFETIME")
+                .long("--lifetime")
+                .takes_value(true)
+                .help("Period of time in seconds while message is valid."),
+        )
+        .arg(
+            Arg::with_name("TIMESTAMP")
+                .long("--time")
+                .takes_value(true)
+                .help("Message creation time in milliseconds. If not specified, `now` is used."),
+        )
         .arg(output_arg.clone())
         .arg(raw_arg.clone());
 
@@ -398,18 +441,15 @@ async fn main_internal() -> Result <(), String> {
         .arg(params_arg.clone())
         .arg(abi_arg.clone());
 
-    let sign_cmd = create_test_sign_command()
-        .author(author)
-        .version(version_string)
-        .arg(keys_arg.clone());
+    let sign_cmd =
+        create_test_sign_command().author(author).version(version_string).arg(keys_arg.clone());
 
     let run_cmd = SubCommand::with_name("run")
         .setting(AppSettings::AllowLeadingHyphen)
         .about("Runs contract function locally.")
         .version(version_string)
         .author(author)
-        .arg(address_boc_tvc_arg.clone()
-            .required(true))
+        .arg(address_boc_tvc_arg.clone().required(true))
         .arg(method_arg.clone())
         .arg(params_arg.clone())
         .arg(abi_arg.clone())
@@ -488,52 +528,52 @@ async fn main_internal() -> Result <(), String> {
             .long("--access_key")
             .help("Project secret or JWT in Evercloud (dashboard.evercloud.dev)."));
 
-    let alias_arg = Arg::with_name("ALIAS")
-        .required(true)
-        .takes_value(true)
-        .help("Alias name.");
+    let alias_arg = Arg::with_name("ALIAS").required(true).takes_value(true).help("Alias name.");
     let alias_cmd = SubCommand::with_name("alias")
         .about("Commands to work with aliases map")
-        .subcommand(SubCommand::with_name("add")
-            .about("Add alias to the aliases map.")
-            .arg(alias_arg.clone())
-            .arg(Arg::with_name("ADDRESS")
-                .long("--addr")
-                .takes_value(true)
-                .help("Contract address."))
-            .arg(keys_arg.clone())
-            .arg(Arg::with_name("ABI")
-                .long("--abi")
-                .takes_value(true)
-                .help("Path or link to the contract ABI file or pure json ABI data.")))
-        .subcommand(SubCommand::with_name("remove")
-            .about("Remove alias from the aliases map.")
-            .arg(alias_arg.clone()))
-        .subcommand(SubCommand::with_name("print")
-            .about("Print the aliases map."))
-        .subcommand(SubCommand::with_name("reset")
-            .about("Clear the aliases map."));
+        .subcommand(
+            SubCommand::with_name("add")
+                .about("Add alias to the aliases map.")
+                .arg(alias_arg.clone())
+                .arg(
+                    Arg::with_name("ADDRESS")
+                        .long("--addr")
+                        .takes_value(true)
+                        .help("Contract address."),
+                )
+                .arg(keys_arg.clone())
+                .arg(
+                    Arg::with_name("ABI")
+                        .long("--abi")
+                        .takes_value(true)
+                        .help("Path or link to the contract ABI file or pure json ABI data."),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("remove")
+                .about("Remove alias from the aliases map.")
+                .arg(alias_arg.clone()),
+        )
+        .subcommand(SubCommand::with_name("print").about("Print the aliases map."))
+        .subcommand(SubCommand::with_name("reset").about("Clear the aliases map."));
 
-    let url_arg = Arg::with_name("URL")
-        .required(true)
-        .takes_value(true)
-        .help("Url of the endpoints list.");
+    let url_arg =
+        Arg::with_name("URL").required(true).takes_value(true).help("Url of the endpoints list.");
     let config_endpoint_cmd = SubCommand::with_name("endpoint")
         .about("Commands to work with the endpoints map.")
-        .subcommand(SubCommand::with_name("add")
-            .about("Add endpoints list.")
-            .arg(url_arg.clone())
-            .arg(Arg::with_name("ENDPOINTS")
-                .required(true)
-                .takes_value(true)
-                .help("List of endpoints (comma separated).")))
-        .subcommand(SubCommand::with_name("remove")
-            .about("Remove endpoints list.")
-            .arg(url_arg.clone()))
-        .subcommand(SubCommand::with_name("reset")
-            .about("Reset the endpoints map."))
-        .subcommand(SubCommand::with_name("print")
-            .about("Print current endpoints map."));
+        .subcommand(
+            SubCommand::with_name("add").about("Add endpoints list.").arg(url_arg.clone()).arg(
+                Arg::with_name("ENDPOINTS")
+                    .required(true)
+                    .takes_value(true)
+                    .help("List of endpoints (comma separated)."),
+            ),
+        )
+        .subcommand(
+            SubCommand::with_name("remove").about("Remove endpoints list.").arg(url_arg.clone()),
+        )
+        .subcommand(SubCommand::with_name("reset").about("Reset the endpoints map."))
+        .subcommand(SubCommand::with_name("print").about("Print current endpoints map."));
 
     let config_cmd = SubCommand::with_name("config")
         .setting(AppSettings::AllowLeadingHyphen)
@@ -671,53 +711,71 @@ async fn main_internal() -> Result <(), String> {
         .version(version_string)
         .author(author)
         .arg(address_arg.clone())
-        .arg(Arg::with_name("TIMEOUT")
-            .long("--timeout")
-            .takes_value(true)
-            .help("Timeout in seconds (default value is 30)."));
+        .arg(
+            Arg::with_name("TIMEOUT")
+                .long("--timeout")
+                .takes_value(true)
+                .help("Timeout in seconds (default value is 30)."),
+        );
 
     let query_raw = SubCommand::with_name("query-raw")
         .about("Executes a raw GraphQL query.")
         .version(version_string)
         .author(author)
-        .arg(Arg::with_name("COLLECTION")
-            .required(true)
-            .takes_value(true)
-            .help("Collection to query."))
-        .arg(Arg::with_name("RESULT")
-            .required(true)
-            .takes_value(true)
-            .help("Result fields to print."))
-        .arg(Arg::with_name("FILTER")
-            .long("--filter")
-            .takes_value(true)
-            .help("Query filter parameter."))
-        .arg(Arg::with_name("LIMIT")
-            .long("--limit")
-            .takes_value(true)
-            .help("Query limit parameter."))
-        .arg(Arg::with_name("ORDER")
-            .long("--order")
-            .takes_value(true)
-            .help("Query order parameter."));
+        .arg(
+            Arg::with_name("COLLECTION")
+                .required(true)
+                .takes_value(true)
+                .help("Collection to query."),
+        )
+        .arg(
+            Arg::with_name("RESULT")
+                .required(true)
+                .takes_value(true)
+                .help("Result fields to print."),
+        )
+        .arg(
+            Arg::with_name("FILTER")
+                .long("--filter")
+                .takes_value(true)
+                .help("Query filter parameter."),
+        )
+        .arg(
+            Arg::with_name("LIMIT")
+                .long("--limit")
+                .takes_value(true)
+                .help("Query limit parameter."),
+        )
+        .arg(
+            Arg::with_name("ORDER")
+                .long("--order")
+                .takes_value(true)
+                .help("Query order parameter."),
+        );
 
     let fee_cmd = SubCommand::with_name("fee")
         .about("Calculates fees for executing message or account storage fee.")
-        .subcommand(SubCommand::with_name("storage")
-            .setting(AppSettings::AllowLeadingHyphen)
-            .about("Gets account storage fee for specified period in nanotons.")
-            .version(version_string)
-            .author(author)
-            .arg(address_arg.clone())
-            .arg(Arg::with_name("PERIOD")
-                .long("--period")
-                .short("-p")
-                .takes_value(true)
-                .help("Time period in seconds (default value is 1 year).")))
-        .subcommand(deploy_cmd.clone()
-            .about("Executes deploy locally, calculates fees and prints table of fees in nanotons."))
-        .subcommand(call_cmd.clone()
-            .about("Executes call locally, calculates fees and prints table of all fees in nanotons."));
+        .subcommand(
+            SubCommand::with_name("storage")
+                .setting(AppSettings::AllowLeadingHyphen)
+                .about("Gets account storage fee for specified period in nanotons.")
+                .version(version_string)
+                .author(author)
+                .arg(address_arg.clone())
+                .arg(
+                    Arg::with_name("PERIOD")
+                        .long("--period")
+                        .short("-p")
+                        .takes_value(true)
+                        .help("Time period in seconds (default value is 1 year)."),
+                ),
+        )
+        .subcommand(deploy_cmd.clone().about(
+            "Executes deploy locally, calculates fees and prints table of fees in nanotons.",
+        ))
+        .subcommand(call_cmd.clone().about(
+            "Executes call locally, calculates fees and prints table of all fees in nanotons.",
+        ));
 
     let proposal_cmd = SubCommand::with_name("proposal")
         .help("Proposal control commands.")
@@ -770,86 +828,78 @@ async fn main_internal() -> Result <(), String> {
                     .takes_value(true)
                     .help("Proposal transaction id.")));
 
-    let getconfig_cmd = SubCommand::with_name("getconfig")
-        .about("Reads the global configuration parameter with defined index.")
-        .arg(Arg::with_name("INDEX")
-            .takes_value(true)
-            .help("Parameter index. If not specified, command will print all config parameters."));
+    let getconfig_cmd =
+        SubCommand::with_name("getconfig")
+            .about("Reads the global configuration parameter with defined index.")
+            .arg(Arg::with_name("INDEX").takes_value(true).help(
+                "Parameter index. If not specified, command will print all config parameters.",
+            ));
 
     let update_config_param_cmd = SubCommand::with_name("update_config")
         .about("Generates message with update of config params.")
         .arg(abi_arg.clone())
-        .arg(Arg::with_name("SEQNO")
-            .takes_value(true)
-            .help("Current seqno from config contract"))
-        .arg(Arg::with_name("CONFIG_MASTER_KEY_FILE")
-            .takes_value(true)
-            .help("path to config-master files"))
-        .arg(Arg::with_name("NEW_PARAM_FILE")
-            .takes_value(true)
-            .help("New config param value"));
+        .arg(Arg::with_name("SEQNO").takes_value(true).help("Current seqno from config contract"))
+        .arg(
+            Arg::with_name("CONFIG_MASTER_KEY_FILE")
+                .takes_value(true)
+                .help("path to config-master files"),
+        )
+        .arg(Arg::with_name("NEW_PARAM_FILE").takes_value(true).help("New config param value"));
 
     let bcconfig_cmd = SubCommand::with_name("dump")
         .about("Commands to dump network entities.")
         .version(version_string)
         .author(author)
-        .subcommand(SubCommand::with_name("config")
-            .about("Dumps the blockchain config for the last key block.")
-            .arg(Arg::with_name("PATH")
-                .required(true)
-                .takes_value(true)
-                .help("Path to the file where to save the blockchain config.")))
-        .subcommand(SubCommand::with_name("account")
-            .about("Dumps state of given accounts.")
-            .setting(AppSettings::AllowLeadingHyphen)
-            .arg(Arg::with_name("ADDRESS")
-                .required(true)
-                .takes_value(true)
-                .help("List of addresses.")
-                .multiple(true))
-            .arg(Arg::with_name("PATH")
-                .takes_value(true)
-                .long("--path")
-                .short("-p")
-                .help("Path to folder where to store the dumped accounts. Default value is \".\".")));
+        .subcommand(
+            SubCommand::with_name("config")
+                .about("Dumps the blockchain config for the last key block.")
+                .arg(
+                    Arg::with_name("PATH")
+                        .required(true)
+                        .takes_value(true)
+                        .help("Path to the file where to save the blockchain config."),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("account")
+                .about("Dumps state of given accounts.")
+                .setting(AppSettings::AllowLeadingHyphen)
+                .arg(
+                    Arg::with_name("ADDRESS")
+                        .required(true)
+                        .takes_value(true)
+                        .help("List of addresses.")
+                        .multiple(true),
+                )
+                .arg(Arg::with_name("PATH").takes_value(true).long("--path").short("-p").help(
+                    "Path to folder where to store the dumped accounts. Default value is \".\".",
+                )),
+        );
 
     let nodeid_cmd = SubCommand::with_name("nodeid")
         .about("Calculates node ID from the validator public key")
-        .arg(Arg::with_name("KEY")
-            .long("--pubkey")
-            .takes_value(true)
-            .help("Validator public key."))
-        .arg(Arg::with_name("KEY_PAIR")
-            .long("--keypair")
-            .takes_value(true)
-            .help("Validator seed phrase or path to the file with keypair."));
+        .arg(Arg::with_name("KEY").long("--pubkey").takes_value(true).help("Validator public key."))
+        .arg(
+            Arg::with_name("KEY_PAIR")
+                .long("--keypair")
+                .takes_value(true)
+                .help("Validator seed phrase or path to the file with keypair."),
+        );
 
     let sendfile_cmd = SubCommand::with_name("sendfile")
         .about("Sends the boc file with an external inbound message to account.")
-        .arg(Arg::with_name("BOC")
-            .required(true)
-            .takes_value(true)
-            .help("Message boc file."));
+        .arg(Arg::with_name("BOC").required(true).takes_value(true).help("Message boc file."));
 
     let fetch_block_cmd = SubCommand::with_name("fetch-block")
         .about("Fetches a block.")
-        .arg(Arg::with_name("BLOCKID")
-            .required(true)
-            .takes_value(true)
-            .help("Block ID."))
-        .arg(Arg::with_name("OUTPUT")
-            .required(true)
-            .takes_value(true)
-            .help("Output file name"));
+        .arg(Arg::with_name("BLOCKID").required(true).takes_value(true).help("Block ID."))
+        .arg(Arg::with_name("OUTPUT").required(true).takes_value(true).help("Output file name"));
 
     let fetch_cmd = SubCommand::with_name("fetch")
         .about("Fetches account's zerostate and transactions.")
         .setting(AppSettings::AllowLeadingHyphen)
         .arg(address_arg.clone().help("Account address to fetch zerostate and txns for."))
-        .arg(Arg::with_name("OUTPUT")
-            .required(true)
-            .takes_value(true)
-            .help("Output file name"));
+        .arg(Arg::with_name("OUTPUT").required(true).takes_value(true).help("Output file name"));
 
     let replay_cmd = SubCommand::with_name("replay")
         .about("Replays account's transactions starting from zerostate.")
@@ -873,37 +923,44 @@ async fn main_internal() -> Result <(), String> {
             .short("-e")
             .conflicts_with("CONFIG_TXNS"));
 
-    let version = format!("{}\nCOMMIT_ID: {}\nBUILD_DATE: {}\nCOMMIT_DATE: {}\nGIT_BRANCH: {}",
-                          env!("CARGO_PKG_VERSION"),
-                          env!("BUILD_GIT_COMMIT"),
-                          env!("BUILD_TIME"),
-                          env!("BUILD_GIT_DATE"),
-                          env!("BUILD_GIT_BRANCH"));
+    let version = format!(
+        "{}\nCOMMIT_ID: {}\nBUILD_DATE: {}\nCOMMIT_DATE: {}\nGIT_BRANCH: {}",
+        env!("CARGO_PKG_VERSION"),
+        env!("BUILD_GIT_COMMIT"),
+        env!("BUILD_TIME"),
+        env!("BUILD_GIT_DATE"),
+        env!("BUILD_GIT_BRANCH")
+    );
     let matches = App::new("tonos_cli")
         .version(&*version)
         .author(author)
         .about("TONLabs console tool for TON")
-        .arg(Arg::with_name("NETWORK")
-            .help("Network to connect.")
-            .short("-u")
-            .long("--url")
-            .takes_value(true))
-        .arg(Arg::with_name("CONFIG")
-            .help("Path to the tonos-cli configuration file.")
-            .short("-c")
-            .long("--config")
-            .takes_value(true))
-        .arg(Arg::with_name("JSON")
-            .help("Cli prints output in json format.")
-            .short("-j")
-            .long("--json"))
+        .arg(
+            Arg::with_name("NETWORK")
+                .help("Network to connect.")
+                .short("-u")
+                .long("--url")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("CONFIG")
+                .help("Path to the tonos-cli configuration file.")
+                .short("-c")
+                .long("--config")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("JSON")
+                .help("Cli prints output in json format.")
+                .short("-j")
+                .long("--json"),
+        )
         .subcommand(version_cmd)
         .subcommand(genphrase_cmd)
         .subcommand(genpubkey_cmd)
         .subcommand(getkeypair_cmd)
         .subcommand(genaddr_cmd)
-        .subcommand(deploy_cmd
-            .arg(alias_arg_long.clone()))
+        .subcommand(deploy_cmd.arg(alias_arg_long.clone()))
         .subcommand(deploy_message_cmd)
         .subcommand(call_cmd)
         .subcommand(send_cmd)
@@ -936,36 +993,42 @@ async fn main_internal() -> Result <(), String> {
         .subcommand(runx_cmd)
         .subcommand(update_config_param_cmd)
         .setting(AppSettings::SubcommandRequired);
-#[cfg(feature = "sold")]
+    #[cfg(feature = "sold")]
     let matches = matches.subcommand(create_compile_command());
 
-    let matches = matches.get_matches_safe()
-        .map_err(|e| match e.kind {
-            clap::ErrorKind::VersionDisplayed => { println!(); exit(0); },
-            clap::ErrorKind::HelpDisplayed => { println!("{}", e); exit(0); },
-            _ => {
-                eprintln!("{}", e);
-                format!("{:#}", json!({"Error": e.message}))
-            }
-        })?;
+    let matches = matches.get_matches_safe().map_err(|e| match e.kind {
+        clap::ErrorKind::VersionDisplayed => {
+            println!();
+            exit(0);
+        }
+        clap::ErrorKind::HelpDisplayed => {
+            println!("{}", e);
+            exit(0);
+        }
+        _ => {
+            eprintln!("{}", e);
+            format!("{:#}", json!({"Error": e.message}))
+        }
+    })?;
 
     let is_json = matches.is_present("JSON");
 
-    command_parser(&matches, is_json).await
-        .map_err(|e| {
-            if e.is_empty() {
-                e
-            } else if is_json {
-                let e = serde_json::from_str(&e).unwrap_or(Value::String(e));
-                format!("{:#}", json!({"Error": e}))
-            } else {
-                format!("Error: {e}")
-            }
-        })
+    command_parser(&matches, is_json).await.map_err(|e| {
+        if e.is_empty() {
+            e
+        } else if is_json {
+            let e = serde_json::from_str(&e).unwrap_or(Value::String(e));
+            format!("{:#}", json!({"Error": e}))
+        } else {
+            format!("Error: {e}")
+        }
+    })
 }
 
-async fn command_parser(matches: &ArgMatches<'_>, is_json: bool) -> Result <(), String> {
-    let config_file = matches.value_of("CONFIG").map(|v| v.to_string())
+async fn command_parser(matches: &ArgMatches<'_>, is_json: bool) -> Result<(), String> {
+    let config_file = matches
+        .value_of("CONFIG")
+        .map(|v| v.to_string())
         .or(env::var("TONOSCLI_CONFIG").ok())
         .unwrap_or(default_config_name());
 
@@ -980,7 +1043,7 @@ async fn command_parser(matches: &ArgMatches<'_>, is_json: bool) -> Result <(), 
 
     if let Some(url) = matches.value_of("NETWORK") {
         let resolved_url = resolve_net_name(url).unwrap_or(url.to_owned());
-        let empty : Vec<String> = Vec::new();
+        let empty: Vec<String> = Vec::new();
         config.endpoints = full_config.endpoints_map.get(&resolved_url).unwrap_or(&empty).clone();
         config.url = resolved_url;
     }
@@ -1111,7 +1174,7 @@ async fn command_parser(matches: &ArgMatches<'_>, is_json: bool) -> Result <(), 
     if let Some(m) = matches.subcommand_matches("test") {
         return test_command(m, &full_config).await;
     }
-#[cfg(feature = "sold")]
+    #[cfg(feature = "sold")]
     if let Some(m) = matches.subcommand_matches("compile") {
         return compile_command(m, &config).await;
     }
@@ -1191,7 +1254,8 @@ async fn body_command(matches: &ArgMatches<'_>, config: &Config) -> Result<(), S
             is_internal: true,
             ..Default::default()
         },
-    ).await
+    )
+    .await
     .map_err(|e| format!("failed to encode body: {}", e))
     .map(|r| r.body)?;
 
@@ -1206,7 +1270,11 @@ async fn body_command(matches: &ArgMatches<'_>, config: &Config) -> Result<(), S
     Ok(())
 }
 
-async fn call_command(matches: &ArgMatches<'_>, config: &Config, call: CallType) -> Result<(), String> {
+async fn call_command(
+    matches: &ArgMatches<'_>,
+    config: &Config,
+    call: CallType,
+) -> Result<(), String> {
     let address = matches.value_of("ADDRESS");
     let method = matches.value_of("METHOD");
     let params = matches.value_of("PARAMS");
@@ -1216,7 +1284,8 @@ async fn call_command(matches: &ArgMatches<'_>, config: &Config, call: CallType)
 
     let abi = Some(abi_from_matches_or_config(matches, &config)?);
 
-    let keys = matches.value_of("KEYS")
+    let keys = matches
+        .value_of("KEYS")
         .or(matches.value_of("SIGN"))
         .map(|s| s.to_string())
         .or(config.keys_path.clone());
@@ -1238,19 +1307,24 @@ async fn call_command(matches: &ArgMatches<'_>, config: &Config, call: CallType)
                 &params.unwrap(),
                 keys,
                 is_fee,
-            ).await
-        },
+            )
+            .await
+        }
         CallType::Msg => {
-            let lifetime = lifetime.map(|val| {
+            let lifetime = lifetime
+                .map(|val| {
                     u32::from_str_radix(val, 10)
                         .map_err(|e| format!("Failed to parse lifetime: {e}"))
                 })
                 .transpose()?
                 .unwrap_or(DEF_MSG_LIFETIME);
-            let timestamp = matches.value_of("TIMESTAMP").map(|val| {
-                u64::from_str_radix(val, 10)
-                    .map_err(|e| format!("Failed to parse timestamp: {e}"))
-            }).transpose()?;
+            let timestamp = matches
+                .value_of("TIMESTAMP")
+                .map(|val| {
+                    u64::from_str_radix(val, 10)
+                        .map_err(|e| format!("Failed to parse timestamp: {e}"))
+                })
+                .transpose()?;
             generate_message(
                 config,
                 address.as_str(),
@@ -1262,22 +1336,23 @@ async fn call_command(matches: &ArgMatches<'_>, config: &Config, call: CallType)
                 raw,
                 output,
                 timestamp,
-            ).await
-        },
+            )
+            .await
+        }
     }
 }
 
 async fn callx_command(matches: &ArgMatches<'_>, full_config: &FullConfig) -> Result<(), String> {
     let config = &full_config.config;
-    let method = Some(matches.value_of("METHOD").or(config.method.as_deref())
-        .ok_or("Method is not defined. Supply it in the config file or command line.")?);
+    let method = Some(
+        matches
+            .value_of("METHOD")
+            .or(config.method.as_deref())
+            .ok_or("Method is not defined. Supply it in the config file or command line.")?,
+    );
     let (address, abi, keys) = contract_data_from_matches_or_config_alias(matches, full_config)?;
-    let params = unpack_alternative_params(
-        matches,
-        abi.as_ref().unwrap(),
-        method.unwrap(),
-        config
-    ).await?;
+    let params =
+        unpack_alternative_params(matches, abi.as_ref().unwrap(), method.unwrap(), config).await?;
     let params = Some(load_params(&params)?);
 
     if !config.is_json {
@@ -1294,16 +1369,15 @@ async fn callx_command(matches: &ArgMatches<'_>, full_config: &FullConfig) -> Re
         &params.unwrap(),
         keys,
         false,
-    ).await
+    )
+    .await
 }
 
 async fn runget_command(matches: &ArgMatches<'_>, config: &Config) -> Result<(), String> {
     let address = matches.value_of("ADDRESS");
     let method = matches.value_of("METHOD");
     let params = matches.values_of("PARAMS");
-    let params = params.map(|values| {
-        json!(values.collect::<Vec<_>>()).to_string()
-    });
+    let params = params.map(|values| json!(values.collect::<Vec<_>>()).to_string());
     if !config.is_json {
         print_args!(address, method, params);
     }
@@ -1314,7 +1388,7 @@ async fn runget_command(matches: &ArgMatches<'_>, config: &Config) -> Result<(),
     } else {
         AccountSource::NETWORK
     };
-    let address =  if source_type != AccountSource::NETWORK {
+    let address = if source_type != AccountSource::NETWORK {
         address.unwrap().to_string()
     } else {
         load_ton_address(address.unwrap(), &config)?
@@ -1323,60 +1397,109 @@ async fn runget_command(matches: &ArgMatches<'_>, config: &Config) -> Result<(),
     run_get_method(config, &address, method.unwrap(), params, source_type, bc_config).await
 }
 
-
-async fn deploy_command(matches: &ArgMatches<'_>, full_config: &mut FullConfig, deploy_type: DeployType) -> Result<(), String> {
+async fn deploy_command(
+    matches: &ArgMatches<'_>,
+    full_config: &mut FullConfig,
+    deploy_type: DeployType,
+) -> Result<(), String> {
     let config = &full_config.config;
     let tvc = matches.value_of("TVC");
     let wc = wc_from_matches_or_config(matches, config)?;
     let raw = matches.is_present("RAW");
     let output = matches.value_of("OUTPUT");
     let abi = Some(abi_from_matches_or_config(matches, config)?);
-    let keys = matches.value_of("KEYS")
-            .or(matches.value_of("SIGN"))
-            .map(|s| s.to_string())
-            .or(config.keys_path.clone());
+    let keys = matches
+        .value_of("KEYS")
+        .or(matches.value_of("SIGN"))
+        .map(|s| s.to_string())
+        .or(config.keys_path.clone());
     let alias = matches.value_of("ALIAS");
-    let params = Some(unpack_alternative_params(
-        matches,
-        abi.as_ref().unwrap(),
-        "constructor",
-        config
-    ).await?);
+    let params = Some(
+        unpack_alternative_params(matches, abi.as_ref().unwrap(), "constructor", config).await?,
+    );
     if !config.is_json {
         let opt_wc = Some(format!("{}", wc));
         print_args!(tvc, params, abi, keys, opt_wc, alias);
     }
     match deploy_type {
-        DeployType::Full => deploy_contract(full_config, tvc.unwrap(), &abi.unwrap(), &params.unwrap(), keys, wc, false, alias).await,
-        DeployType::MsgOnly => generate_deploy_message(tvc.unwrap(), &abi.unwrap(), &params.unwrap(), keys, wc, raw, output, config).await,
-        DeployType::Fee => deploy_contract(full_config, tvc.unwrap(), &abi.unwrap(), &params.unwrap(), keys, wc, true, None).await,
+        DeployType::Full => {
+            deploy_contract(
+                full_config,
+                tvc.unwrap(),
+                &abi.unwrap(),
+                &params.unwrap(),
+                keys,
+                wc,
+                false,
+                alias,
+            )
+            .await
+        }
+        DeployType::MsgOnly => {
+            generate_deploy_message(
+                tvc.unwrap(),
+                &abi.unwrap(),
+                &params.unwrap(),
+                keys,
+                wc,
+                raw,
+                output,
+                config,
+            )
+            .await
+        }
+        DeployType::Fee => {
+            deploy_contract(
+                full_config,
+                tvc.unwrap(),
+                &abi.unwrap(),
+                &params.unwrap(),
+                keys,
+                wc,
+                true,
+                None,
+            )
+            .await
+        }
     }
 }
 
-async fn deployx_command(matches: &ArgMatches<'_>, full_config: &mut FullConfig) -> Result<(), String> {
+async fn deployx_command(
+    matches: &ArgMatches<'_>,
+    full_config: &mut FullConfig,
+) -> Result<(), String> {
     let config = &full_config.config;
     let tvc = matches.value_of("TVC");
     let wc = wc_from_matches_or_config(matches, config)?;
     let abi = Some(abi_from_matches_or_config(matches, &config)?);
-    let params = Some(unpack_alternative_params(
-        matches,
-        abi.as_ref().unwrap(),
-        "constructor",
-        config
-    ).await?);
-    let keys = matches.value_of("KEYS")
-        .map(|s| s.to_string())
-        .or(config.keys_path.clone());
+    let params = Some(
+        unpack_alternative_params(matches, abi.as_ref().unwrap(), "constructor", config).await?,
+    );
+    let keys = matches.value_of("KEYS").map(|s| s.to_string()).or(config.keys_path.clone());
 
     let alias = matches.value_of("ALIAS");
     if !config.is_json {
         let opt_wc = Some(format!("{}", wc));
         print_args!(tvc, params, abi, keys, opt_wc, alias);
     }
-    deploy_contract(full_config, tvc.unwrap(), &abi.unwrap(), &params.unwrap(), keys, wc, false, alias).await
+    deploy_contract(
+        full_config,
+        tvc.unwrap(),
+        &abi.unwrap(),
+        &params.unwrap(),
+        keys,
+        wc,
+        false,
+        alias,
+    )
+    .await
 }
 
-fn config_command(matches: &ArgMatches, mut full_config: FullConfig, is_json: bool) -> Result<(), String> {
+fn config_command(
+    matches: &ArgMatches,
+    mut full_config: FullConfig,
+    is_json: bool,
+) -> Result<(), String> {
     let mut result = Ok(());
     if matches.is_present("GLOBAL") {
         full_config = FullConfig::from_file(&global_config_path());
@@ -1438,29 +1561,32 @@ async fn genaddr_command(matches: &ArgMatches<'_>, config: &Config) -> Result<()
     let update_tvc = matches.is_present("SAVE");
     let abi = match abi_from_matches_or_config(matches, config) {
         Ok(abi) => Some(abi),
-        Err(err) => {
-            match load_abi_from_tvc(tvc.clone().unwrap()) {
-                Some(abi) => Some(abi),
-                None => return Err(err)
-            }
-        }
+        Err(err) => match load_abi_from_tvc(tvc.clone().unwrap()) {
+            Some(abi) => Some(abi),
+            None => return Err(err),
+        },
     };
     let is_update_tvc = if update_tvc { Some("true") } else { None };
     if !config.is_json {
         print_args!(tvc, abi, wc, keys, init_data, is_update_tvc);
     }
-    generate_address(config, tvc.unwrap(), &abi.unwrap(), wc, keys, new_keys, init_data, update_tvc).await
+    generate_address(config, tvc.unwrap(), &abi.unwrap(), wc, keys, new_keys, init_data, update_tvc)
+        .await
 }
 
 async fn account_command(matches: &ArgMatches<'_>, config: &Config) -> Result<(), String> {
-    let addresses_list = matches.values_of("ADDRESS")
+    let addresses_list = matches
+        .values_of("ADDRESS")
         .map(|val| val.collect::<Vec<_>>())
         .or(config.addr.as_ref().map(|addr| vec![addr.as_str()]))
-        .ok_or("Address was not found. It must be specified as option or in the config file."
-            .to_string())?;
-    if addresses_list.len() > 1 &&
-        (matches.is_present("DUMPTVC") || matches.is_present("DUMPTVC")) {
-        return Err("`DUMPTVC` and `DUMPBOC` options are not applicable to a list of addresses.".to_string());
+        .ok_or(
+            "Address was not found. It must be specified as option or in the config file."
+                .to_string(),
+        )?;
+    if addresses_list.len() > 1 && (matches.is_present("DUMPTVC") || matches.is_present("DUMPTVC"))
+    {
+        return Err("`DUMPTVC` and `DUMPBOC` options are not applicable to a list of addresses."
+            .to_string());
     }
     let is_boc = matches.is_present("BOC");
     let mut formatted_list = vec![];
@@ -1470,7 +1596,7 @@ async fn account_command(matches: &ArgMatches<'_>, config: &Config) -> Result<()
             formatted_list.push(formatted);
         } else {
             if !std::path::Path::new(address).exists() {
-                return  Err(format!("File {} doesn't exist.", address));
+                return Err(format!("File {} doesn't exist.", address));
             }
             formatted_list.push(address.to_string());
         }
@@ -1502,7 +1628,10 @@ async fn dump_accounts_command(matches: &ArgMatches<'_>, config: &Config) -> Res
 async fn account_wait_command(matches: &ArgMatches<'_>, config: &Config) -> Result<(), String> {
     let address = matches.value_of("ADDRESS").unwrap();
     let address = load_ton_address(address, &config)?;
-    let timeout = matches.value_of("TIMEOUT").unwrap_or("30").parse::<u64>()
+    let timeout = matches
+        .value_of("TIMEOUT")
+        .unwrap_or("30")
+        .parse::<u64>()
         .map_err(|e| format!("failed to parse timeout: {}", e))?;
     wait_for_change(config, &address, timeout).await
 }
@@ -1523,12 +1652,12 @@ async fn storage_command(matches: &ArgMatches<'_>, config: &Config) -> Result<()
         print_args!(address, period);
     }
     let address = load_ton_address(address.unwrap(), &config)?;
-    let period = period.map(|val| {
-        u32::from_str_radix(val, 10)
-            .map_err(|e| format!("failed to parse period: {}", e))
-    })
-    .transpose()?
-    .unwrap_or(DEF_STORAGE_PERIOD);
+    let period = period
+        .map(|val| {
+            u32::from_str_radix(val, 10).map_err(|e| format!("failed to parse period: {}", e))
+        })
+        .transpose()?
+        .unwrap_or(DEF_STORAGE_PERIOD);
     calc_storage(&config, address.as_str(), period).await
 }
 
@@ -1552,8 +1681,9 @@ async fn proposal_create_command(matches: &ArgMatches<'_>, config: &Config) -> R
         dest.unwrap(),
         comment.unwrap(),
         lifetime,
-        offline
-    ).await
+        offline,
+    )
+    .await
 }
 
 async fn proposal_vote_command(matches: &ArgMatches<'_>, config: &Config) -> Result<(), String> {
@@ -1599,7 +1729,14 @@ async fn update_config_command(matches: &ArgMatches<'_>, config: &Config) -> Res
     if !config.is_json {
         print_args!(seqno, config_master, new_param);
     }
-    gen_update_config_message(abi, seqno, config_master.unwrap(), new_param.unwrap(), config.is_json).await
+    gen_update_config_message(
+        abi,
+        seqno,
+        config_master.unwrap(),
+        new_param.unwrap(),
+        config.is_json,
+    )
+    .await
 }
 
 async fn dump_bc_config_command(matches: &ArgMatches<'_>, config: &Config) -> Result<(), String> {
@@ -1617,13 +1754,14 @@ fn nodeid_command(matches: &ArgMatches, config: &Config) -> Result<(), String> {
         print_args!(key, keypair);
     }
     let nodeid = if let Some(key) = key {
-        let vec = hex::decode(key)
-            .map_err(|e| format!("failed to decode public key: {}", e))?;
+        let vec = hex::decode(key).map_err(|e| format!("failed to decode public key: {}", e))?;
         convert::nodeid_from_pubkey(&vec)?
     } else if let Some(pair) = keypair {
         let pair = crypto::load_keypair(pair)?;
-        convert::nodeid_from_pubkey(&hex::decode(&pair.public)
-            .map_err(|e| format!("failed to decode public key: {}", e))?)?
+        convert::nodeid_from_pubkey(
+            &hex::decode(&pair.public)
+                .map_err(|e| format!("failed to decode public key: {}", e))?,
+        )?
     } else {
         return Err("Either public key or key pair parameter should be provided".to_owned());
     };

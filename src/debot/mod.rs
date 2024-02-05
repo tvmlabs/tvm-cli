@@ -1,32 +1,41 @@
-/*
-* Copyright 2018-2023 EverX.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright 2018-2023 EverX.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 mod callbacks;
 mod interfaces;
 mod pipechain;
 mod processor;
-mod term_signing_box;
-mod term_encryption_box;
 pub mod term_browser;
+mod term_encryption_box;
+mod term_signing_box;
+
+use callbacks::Callbacks;
+use clap::App;
+use clap::AppSettings;
+use clap::Arg;
+use clap::ArgMatches;
+use clap::SubCommand;
+pub use interfaces::dinterface::SupportedInterfaces;
+use pipechain::ApproveKind;
+use pipechain::ChainLink;
+use pipechain::PipeChain;
+use processor::ChainProcessor;
+use processor::ProcessorError;
+use simplelog::*;
+use term_browser::action_input;
+use term_browser::input;
+use term_browser::run_debot_browser;
+use term_browser::terminal_input;
 
 use crate::config::Config;
-use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
-use simplelog::*;
-use term_browser::{run_debot_browser, terminal_input, input, action_input};
 use crate::helpers::load_ton_address;
-use callbacks::Callbacks;
-use processor::{ChainProcessor, ProcessorError};
-use pipechain::{ApproveKind, PipeChain, ChainLink};
-pub use interfaces::dinterface::SupportedInterfaces;
 
 pub fn create_debot_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("debot")
@@ -38,20 +47,12 @@ pub fn create_debot_command<'a, 'b>() -> App<'a, 'b> {
         .subcommand(
             SubCommand::with_name("fetch")
                 .setting(AppSettings::AllowLeadingHyphen)
-                .arg(
-                    Arg::with_name("ADDRESS")
-                        .required(true)
-                        .help("DeBot TON address."),
-                )
+                .arg(Arg::with_name("ADDRESS").required(true).help("DeBot TON address.")),
         )
         .subcommand(
             SubCommand::with_name("start")
                 .setting(AppSettings::AllowLeadingHyphen)
-                .arg(
-                    Arg::with_name("ADDRESS")
-                        .required(true)
-                        .help("DeBot TON address."),
-                )
+                .arg(Arg::with_name("ADDRESS").required(true).help("DeBot TON address."))
                 .arg(
                     Arg::with_name("PIPECHAIN")
                         .short("m")
@@ -65,21 +66,17 @@ pub fn create_debot_command<'a, 'b>() -> App<'a, 'b> {
                         .long("signkey")
                         .takes_value(true)
                         .help("Define keypair to auto sign transactions."),
-                )
+                ),
         )
         .subcommand(
             SubCommand::with_name("invoke")
                 .setting(AppSettings::AllowLeadingHyphen)
-                .arg(
-                    Arg::with_name("ADDRESS")
-                        .required(true)
-                        .help("Debot TON address.")
-                )
+                .arg(Arg::with_name("ADDRESS").required(true).help("Debot TON address."))
                 .arg(
                     Arg::with_name("MESSAGE")
                         .required(true)
-                        .help("Message to DeBot encoded as base64/base64url.")
-                )
+                        .help("Message to DeBot encoded as base64/base64url."),
+                ),
         )
 }
 
@@ -94,19 +91,11 @@ pub async fn debot_command(m: &ArgMatches<'_>, config: Config) -> Result<(), Str
     let mut loggers: Vec<Box<dyn SharedLogger>> = vec![];
     let file = std::fs::File::create("debot_err.log");
     if file.is_ok() {
-        loggers.push(WriteLogger::new(
-            LevelFilter::Error,
-            log_conf.clone(),
-            file.unwrap(),
-        ));
+        loggers.push(WriteLogger::new(LevelFilter::Error, log_conf.clone(), file.unwrap()));
     }
 
     if debug {
-        loggers.push(TermLogger::new(
-            LevelFilter::Debug,
-            log_conf.clone(),
-            TerminalMode::Mixed,
-        ));
+        loggers.push(TermLogger::new(LevelFilter::Debug, log_conf.clone(), TerminalMode::Mixed));
     }
     CombinedLogger::init(loggers).unwrap();
 
@@ -125,9 +114,7 @@ pub async fn debot_command(m: &ArgMatches<'_>, config: Config) -> Result<(), Str
 async fn fetch_command(m: &ArgMatches<'_>, config: Config) -> Result<(), String> {
     let addr = m.value_of("ADDRESS");
     let pipechain = m.value_of("PIPECHAIN");
-    let signkey_path = m.value_of("SIGNKEY")
-        .map(|x| x.to_owned())
-        .or(config.keys_path.clone());
+    let signkey_path = m.value_of("SIGNKEY").map(|x| x.to_owned()).or(config.keys_path.clone());
     let is_json = config.is_json;
     let pipechain = if let Some(filename) = pipechain {
         let manifest_raw = std::fs::read_to_string(filename)
@@ -141,12 +128,14 @@ async fn fetch_command(m: &ArgMatches<'_>, config: Config) -> Result<(), String>
     let result = run_debot_browser(addr.as_str(), config, pipechain, signkey_path).await;
     match result {
         Ok(Some(arg)) => {
-            if !is_json { println!("Returned value:"); }
+            if !is_json {
+                println!("Returned value:");
+            }
             println!("{:#}", arg);
             Ok(())
         }
         Err(err) if err.contains("NoMoreChainlinks") => Ok(()),
-        result => result.map(|_| ())
+        result => result.map(|_| ()),
     }
 }
 

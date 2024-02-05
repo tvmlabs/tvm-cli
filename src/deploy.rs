@@ -1,29 +1,34 @@
-/*
- * Copyright 2018-2023 EverX.
- *
- * Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
- * this file except in compliance with the License.
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific TON DEV software governing permissions and
- * limitations under the License.
- */
-use crate::helpers::{create_client_verbose, create_client_local, load_abi, now_ms};
+// Copyright 2018-2023 EverX.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
+use ton_client::abi::encode_message;
+use ton_client::abi::Abi;
+use ton_client::abi::CallSet;
+use ton_client::abi::DeploySet;
+use ton_client::abi::FunctionHeader;
+use ton_client::abi::ParamsOfEncodeMessage;
+use ton_client::abi::Signer;
+use ton_client::crypto::KeyPair;
+
+use crate::call::emulate_locally;
+use crate::call::process_message;
+use crate::call::send_message_and_wait;
 use crate::config::FullConfig;
 use crate::crypto::load_keypair;
-use crate::call::{
-    emulate_locally,
-    process_message,
-    send_message_and_wait,
-};
-use ton_client::abi::{
-    encode_message, Signer, CallSet, DeploySet, ParamsOfEncodeMessage, Abi, FunctionHeader,
-};
-use ton_client::crypto::KeyPair;
+use crate::helpers::create_client_local;
+use crate::helpers::create_client_verbose;
+use crate::helpers::load_abi;
+use crate::helpers::now_ms;
+use crate::message::display_generated_message;
+use crate::message::EncodedMessage;
 use crate::Config;
-use crate::message::{display_generated_message, EncodedMessage};
 
 pub async fn deploy_contract(
     full_config: &mut FullConfig,
@@ -42,9 +47,12 @@ pub async fn deploy_contract(
         println!("Deploying...");
     }
 
-    let (msg, addr) = prepare_deploy_message(tvc, abi, params, keys_file.clone(), wc, &full_config.config).await?;
+    let (msg, addr) =
+        prepare_deploy_message(tvc, abi, params, keys_file.clone(), wc, &full_config.config)
+            .await?;
 
-    let enc_msg = encode_message(ton.clone(), msg.clone()).await
+    let enc_msg = encode_message(ton.clone(), msg.clone())
+        .await
         .map_err(|e| format!("failed to create inbound message: {}", e))?;
 
     if config.local_run || is_fee {
@@ -56,13 +64,9 @@ pub async fn deploy_contract(
 
     if config.async_call {
         let abi = load_abi(&abi, config).await?;
-        send_message_and_wait(ton,
-                              Some(abi),
-                              enc_msg.message,
-                              config).await?;
+        send_message_and_wait(ton, Some(abi), enc_msg.message, config).await?;
     } else {
-        process_message(ton.clone(), msg, config).await
-            .map_err(|e| format!("{:#}", e))?;
+        process_message(ton.clone(), msg, config).await.map_err(|e| format!("{:#}", e))?;
     }
 
     if !config.is_json {
@@ -89,11 +93,11 @@ pub async fn generate_deploy_message(
     output: Option<&str>,
     config: &Config,
 ) -> Result<(), String> {
-
     let ton = create_client_local()?;
 
     let (msg, addr) = prepare_deploy_message(tvc, abi, params, keys_file, wc, config).await?;
-    let msg = encode_message(ton, msg).await
+    let msg = encode_message(ton, msg)
+        .await
         .map_err(|e| format!("failed to create inbound message: {}", e))?;
 
     let msg = EncodedMessage {
@@ -122,8 +126,8 @@ pub async fn prepare_deploy_message(
 
     let keys = keys_file.map(|k| load_keypair(&k)).transpose()?;
 
-    let tvc_bytes = std::fs::read(tvc)
-        .map_err(|e| format!("failed to read smart contract file {tvc}: {e}"))?;
+    let tvc_bytes =
+        std::fs::read(tvc).map_err(|e| format!("failed to read smart contract file {tvc}: {e}"))?;
 
     prepare_deploy_message_params(
         &tvc_bytes,
@@ -132,8 +136,9 @@ pub async fn prepare_deploy_message(
         now_ms(),
         params,
         keys,
-        wc
-    ).await
+        wc,
+    )
+    .await
 }
 
 pub async fn prepare_deploy_message_params(
@@ -143,7 +148,7 @@ pub async fn prepare_deploy_message_params(
     time: u64,
     params: &str,
     keys: Option<KeyPair>,
-    wc: i32
+    wc: i32,
 ) -> Result<(ParamsOfEncodeMessage, String), String> {
     let tvc = base64::encode(&tvc_bytes);
 
@@ -154,42 +159,32 @@ pub async fn prepare_deploy_message_params(
             wc,
             keys.as_ref().map(|k| k.public.clone()),
             None,
-            abi.clone()
-        ).await?
+            abi.clone(),
+        )
+        .await?
     } else {
         let tvc_cell = ton_types::boc::read_single_root_boc(&tvc_bytes).unwrap();
         let tvc_hash = tvc_cell.repr_hash();
         format!("{}:{}", wc, tvc_hash.as_hex_string())
     };
 
-    let header = Some(FunctionHeader {
-        time: Some(time),
-        ..Default::default()
-    });
-    let deploy_set = Some(DeploySet {
-        tvc: Some(tvc),
-        workchain_id: Some(wc),
-        ..Default::default()
-    });
+    let header = Some(FunctionHeader { time: Some(time), ..Default::default() });
+    let deploy_set =
+        Some(DeploySet { tvc: Some(tvc), workchain_id: Some(wc), ..Default::default() });
     let params = serde_json::from_str(params)
         .map_err(|e| format!("function arguments is not a json: {}", e))?;
-    let call_set = Some(CallSet {
-        function_name,
-        input: Some(params),
-        header,
-        ..Default::default()
-    });
-    let signer = if let Some(keys) = keys {
-        Signer::Keys{ keys }
-    } else {
-        Signer::None
-    };
-    Ok((ParamsOfEncodeMessage {
-        abi,
-        address: Some(address.clone()),
-        deploy_set,
-        call_set,
-        signer,
-        ..Default::default()
-    }, address))
+    let call_set =
+        Some(CallSet { function_name, input: Some(params), header, ..Default::default() });
+    let signer = if let Some(keys) = keys { Signer::Keys { keys } } else { Signer::None };
+    Ok((
+        ParamsOfEncodeMessage {
+            abi,
+            address: Some(address.clone()),
+            deploy_set,
+            call_set,
+            signer,
+            ..Default::default()
+        },
+        address,
+    ))
 }
