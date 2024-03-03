@@ -170,7 +170,7 @@ async fn main_internal() -> Result<(), String> {
         .help("Function arguments. Must be a list of `--name value` pairs or a json string with all arguments.")
         .multiple(true);
 
-    let author = "EverX";
+    let author = "TVM Labs";
 
     let callx_cmd = SubCommand::with_name("callx")
         .about("Sends an external message with encoded function call to the contract (alternative syntax).")
@@ -928,7 +928,7 @@ async fn main_internal() -> Result<(), String> {
     let matches = App::new("tonos_cli")
         .version(&*version)
         .author(author)
-        .about("TONLabs console tool for TON")
+        .about("TVMLabs console tool for TVM networks")
         .arg(
             Arg::with_name("NETWORK")
                 .help("Network to connect.")

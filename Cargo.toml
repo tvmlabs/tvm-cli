@@ -14,7 +14,29 @@ keywords = [
 name = "tvm-cli"
 readme = "README.md"
 repository = "https://github.com/tvmlabs/tvm-cli"
-version = "0.38.0"
+version = "0.39.0"
+
+[profile.profiling]
+debug = 1
+inherits = 'release'
+
+[profile.dev]
+# Must always use panic = "abort" to avoid needing to define the unstable eh_personality lang item.
+panic = "abort"
+# Enable only a small amount of optimization in debug mode
+opt-level = 1
+
+# Enable high optimizations for dependencies, but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+opt-level = "z"   # Optimize for size.
+lto = true        # Enable Link Time Optimization
+codegen-units = 1 # Reduce number of codegen units to increase optimizations.
+panic = "abort"   # Abort on panic
+strip = true      # Automatically strip symbols from the binary.
+
 
 [dependencies]
 anyhow = "1.0.79"
@@ -44,10 +66,8 @@ tvm_abi = { git = "https://github.com/tvmlabs/tvm-abi", tag = "3.0.0" }
 tvm_assembler = { git = "https://github.com/tvmlabs/tvm-assembler", tag = "2.0.0" }
 tvm_block = { git = "https://github.com/tvmlabs/tvm-block", tag = "2.0.0" }
 tvm_block_json = { git = "https://github.com/tvmlabs/tvm-block-json", tag = "0.8.0" }
-# tvm_client = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "feature/masterchain-free" }
 tvm_client = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "rc-1.46.0", default-features = false, features = ["std", "rustls-tls-webpki-roots"] }
 tvm_executor = { git = "https://github.com/tvmlabs/tvm-executor", tag = "2.0.0" }
-# tvm_sdk = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "feature/masterchain-free" }
 tvm_sdk = { git = "https://github.com/tvmlabs/tvm-sdk", branch = "rc-1.46.0", default-features = false }
 tvm_types = { git = "https://github.com/tvmlabs/tvm-types", tag = "3.0.1" }
 tvm_vm = { git = "https://github.com/tvmlabs/tvm-vm", tag = "2.0.0" }
